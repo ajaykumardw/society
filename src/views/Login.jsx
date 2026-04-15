@@ -133,6 +133,10 @@ const Login = ({ mode }) => {
     
     setErrorState(null);
 
+
+    //API
+
+    
     const res = await signIn('credentials', {
       email: data.email,
       password: data.password,
