@@ -412,7 +412,7 @@ const ComplainTable = () => {
       })
 
       const result = await response.json()
-      
+
       if (response.ok) setData(result?.data || [])
     } catch (error) {
       console.error(error)
@@ -501,6 +501,12 @@ const ComplainTable = () => {
       header: "Category",
       cell: ({ row }) => (
         <Typography>{row.original?.category?.name || "-"}</Typography>
+      ),
+    }),
+    columnHelper.accessor("assigned_user", {
+      header: "Assigned User",
+      cell: ({ row }) => (
+        <Typography>{row.original?.assigned_user?.first_name || "-"} {row.original?.assigned_user?.last_name || "-"}</Typography>
       ),
     }),
     columnHelper.accessor("description", {

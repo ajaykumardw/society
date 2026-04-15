@@ -367,6 +367,34 @@ const BillTable = () => {
         )
       }),
 
+      columnHelper.accessor('apartment_data', {
+        header: 'Apartment',
+        cell: ({ row }) => {
+          const apartments = row.original.created_by_user.apartment_data || []
+
+          return (
+
+            <Typography variant="body2" component="div">
+              {apartments.length > 0 ? (
+                apartments.map((item, index) => {
+                  const aptNo = item.apartment_id?.apartment_no || 'N/A'
+                  const towerName = item.tower_id?.name || 'N/A'
+                  const floorName = item?.floor_id?.floor_name || 'N/A'
+
+                  return (
+                    <div key={index}>
+                      {aptNo}, {towerName}, {floorName}
+                    </div>
+                  )
+                })
+              ) : (
+                'No apartment assigned'
+              )}
+            </Typography>
+          )
+        }
+      }),
+
       // Complaint Type
       columnHelper.accessor("complaint_type", {
         header: "Type",

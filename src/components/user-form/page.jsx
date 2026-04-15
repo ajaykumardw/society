@@ -42,6 +42,7 @@ import {
   minLength,
   maxLength,
   pipe,
+  maxValue,
   boolean,
   regex,
   optional,
@@ -162,7 +163,19 @@ const UserFormLayout = () => {
       string([minLength(1, 'Each role must be at least 1 character')]),
       [minLength(1, 'At least one role must be selected')]
     ),
-    no_of_pets: optional(string()),
+    no_of_pets: optional(
+      pipe(
+        string(),
+        maxValue(2, "Maximum 2 pets allowed")
+      )
+    ),
+
+    no_of_members: optional(
+      pipe(
+        string(),
+        maxValue(20, "Maximum 20 members allowed")
+      )
+    ),
     vehicle_data: array(
       pipe(
         object({
@@ -250,6 +263,7 @@ const UserFormLayout = () => {
     password: '',
     country_id: '',
     no_of_pets: '',
+    no_of_members: '',
     state_id: '',
     city_id: '',
     region_id: '',
@@ -257,6 +271,7 @@ const UserFormLayout = () => {
     user_type: "",
     address: '',
     no_of_pets: "",
+    no_of_members: '',
     vehicle_data: [
       { vehicle_number: "", vehicle_name: "" }
     ],
@@ -320,6 +335,7 @@ const UserFormLayout = () => {
         { tower_id: "", floor_id: "", apartment_id: "" }
       ],
       no_of_pets: "",
+      no_of_members: '',
       vehicle_data: [
         { vehicle_number: "", vehicle_name: "" }
       ],
@@ -499,6 +515,7 @@ const UserFormLayout = () => {
       sip_extension: editData.sip_extension ?? '',
       tower_id: editData.tower_id ?? '',
       no_of_pets: editData.no_of_pets ?? '',
+      no_of_members: editData.no_of_members ?? '',
       vehicle_data: Array.isArray(editData.vehicle_data) ? editData.vehicle_data : [],
       floor_id: editData.floor_id ?? '',
       apartment_id: editData.apartment_id ?? '',
@@ -1628,6 +1645,35 @@ const UserFormLayout = () => {
               >
                 Add Vehicle
               </Button>
+            </Grid>
+
+            <Grid item size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name="no_of_members"
+                control={control}
+                defaultValue=''
+                render={({ field }) => (
+                  <CustomTextField
+                    {...field}
+                    fullWidth
+                    type="tel"
+                    label="No of members"
+                    placeholder="Enter number of members"
+                    error={!!errors.no_of_members}
+                    helperText={errors.no_of_members?.message}
+                    inputProps={{
+                      inputMode: 'numeric', // shows numeric keypad on mobile
+                      pattern: '[0-9]*' // browser hint
+                    }}
+                    onChange={(e) => {
+
+                      const numericValue = e.target.value.replace(/\D/g, '');
+
+                      field.onChange(numericValue);
+                    }}
+                  />
+                )}
+              />
             </Grid>
 
             <Grid item size={{ xs: 12, sm: 6 }}>
