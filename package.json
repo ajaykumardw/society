@@ -66,7 +66,7 @@
     "keen-slider": "6.8.6",
     "mapbox-gl": "3.9.0",
     "negotiator": "1.0.0",
-    "next": "15.1.2",
+    "next": "^16.2.3",
     "next-auth": "4.24.11",
     "number-to-words": "^1.2.4",
     "qrcode.react": "^4.2.0",
