@@ -10,6 +10,8 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  TextField,
+  Autocomplete,
   CircularProgress,
   MenuItem,
   Skeleton,
@@ -326,6 +328,13 @@ const BillDialog = ({ open, setOpen, selectedZone, fetchZoneData, type }) => {
     }
   }
 
+  const sortedApartments = [...createData.apartment].sort((a, b) => {
+    const nameA = String(a.apartment_no ?? '');
+    const nameB = String(b.apartment_no ?? '');
+
+    return nameA.localeCompare(nameB, undefined, { numeric: true });
+  });
+
   //  Skeleton while fetching
   if (!createData.apartment.length && !createData.billType.length) {
     return (
@@ -424,22 +433,28 @@ const BillDialog = ({ open, setOpen, selectedZone, fetchZoneData, type }) => {
                   name="apartment_id"
                   control={control}
                   render={({ field }) => (
-                    <CustomTextField
-                      {...field}
-                      select
-                      fullWidth
-                      label="Select Apartment"
-                      required
-                      error={!!errors?.apartment_id}
-                      helperText={errors?.apartment_id?.message}
-                    >
-                      <MenuItem value="">Select Apartment</MenuItem>
-                      {createData.apartment.map(item => (
-                        <MenuItem key={item._id} value={item._id}>
-                          {item.apartment_no ?? 'Unnamed Apartment'}, {item.tower_id?.name}, {item?.floor_id?.floor_name}
-                        </MenuItem>
-                      ))}
-                    </CustomTextField>
+                    <Autocomplete
+                      options={sortedApartments}
+                      getOptionLabel={(option) =>
+                        `${option.apartment_no ?? 'Unnamed Apartment'}, ${option.tower_id?.name}, ${option?.floor_id?.floor_name}`
+                      }
+                      value={
+                        sortedApartments.find(item => item._id === field.value) || null
+                      }
+                      onChange={(e, newValue) => {
+                        field.onChange(newValue?._id || '');
+                      }}
+                      renderInput={(params) => (
+
+                        <TextField
+                          {...params}
+                          label="Select Apartment"
+                          required
+                          error={!!errors?.apartment_id}
+                          helperText={errors?.apartment_id?.message}
+                        />
+                      )}
+                    />
                   )}
                 />
               </Grid>
