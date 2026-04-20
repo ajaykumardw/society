@@ -1311,9 +1311,21 @@ const UserFormLayout = () => {
                           <i className="tabler-x" />
                         </IconButton>
                       </Grid>
+
                     </Grid>
                   </Grid>
                 ))}
+              </Grid>
+              <Grid item size={{ xs: 12 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<i className="tabler-plus" />}
+                  onClick={() =>
+                    append({ title: '', ip: '' })
+                  }
+                >
+                  Add Camera
+                </Button>
               </Grid>
             </Grid>
 
