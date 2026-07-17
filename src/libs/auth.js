@@ -4,6 +4,46 @@ import GoogleProvider from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { PrismaClient } from '@prisma/client'
 
+// import { initializeApp } from "firebase/app";
+// import { getMessaging, getToken } from "firebase/messaging";
+
+// const firebaseConfig = {
+//   apiKey: "YOUR_API_KEY",
+//   authDomain: "YOUR_PROJECT.firebaseapp.com",
+//   projectId: "YOUR_PROJECT_ID",
+//   storageBucket: "YOUR_PROJECT.appspot.com",
+//   messagingSenderId: "YOUR_SENDER_ID",
+//   appId: "YOUR_APP_ID"
+// };
+
+// const app = initializeApp(firebaseConfig);
+// const messaging = getMessaging(app);
+
+// export const generateFCMToken = async () => {
+//   try {
+//     const permission = await Notification.requestPermission();
+
+//     if (permission !== "granted") {
+//       console.log("Notification permission denied");
+//       return null;
+//     }
+
+//     const token = await getToken(messaging, {
+//       vapidKey: "YOUR_WEB_PUSH_CERTIFICATE_KEY_PAIR"
+//     });
+
+//     if (token) {
+//       console.log("FCM Token:", token);
+//       return token;
+//     }
+
+//     return null;
+//   } catch (error) {
+//     console.error("Error generating FCM token:", error);
+//     return null;
+//   }
+// };
+
 const prisma = new PrismaClient()
 
 export const authOptions = {
@@ -35,7 +75,7 @@ export const authOptions = {
           const res = await fetch(`${process.env.API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, isNotMobile })
+            body: JSON.stringify({ email, password, isNotMobile, fcm_token:  })
           });
 
           const data = await res.json();
