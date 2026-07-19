@@ -19,7 +19,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
 var prisma = new _client.PrismaClient();
 var authOptions = {
   adapter: (0, _prismaAdapter.PrismaAdapter)(prisma),
-
   // ** Configure one or more authentication providers
   // ** Please refer to https://next-auth.js.org/configuration/options#providers for more `providers` options
   providers: [(0, _credentials["default"])({
@@ -34,16 +33,15 @@ var authOptions = {
      */
     credentials: {},
     authorize: function authorize(credentials) {
-      var email, password, res, data;
-
+      var email, password, fcm_token, isNotMobile, res, data;
       return regeneratorRuntime.async(function authorize$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              email = credentials.email, password = credentials.password;
-              _context.prev = 1;
-              _context.next = 4;
-
+              email = credentials.email, password = credentials.password, fcm_token = credentials.fcm_token;
+              isNotMobile = true;
+              _context.prev = 2;
+              _context.next = 5;
               return regeneratorRuntime.awrap(fetch("".concat(process.env.API_URL, "/auth/login"), {
                 method: 'POST',
                 headers: {
@@ -51,27 +49,28 @@ var authOptions = {
                 },
                 body: JSON.stringify({
                   email: email,
-                  password: password
+                  password: password,
+                  isNotMobile: isNotMobile,
+                  fcm_token: fcm_token
                 })
               }));
 
-            case 4:
+            case 5:
               res = _context.sent;
-              _context.next = 7;
-
+              _context.next = 8;
               return regeneratorRuntime.awrap(res.json());
 
-            case 7:
+            case 8:
               data = _context.sent;
 
               if (res.ok) {
-                _context.next = 10;
+                _context.next = 11;
                 break;
               }
 
               return _context.abrupt("return", null);
 
-            case 10:
+            case 11:
               return _context.abrupt("return", {
                 name: data.name,
                 email: data.email,
@@ -81,26 +80,24 @@ var authOptions = {
                 expiresAt: data.expiresAt
               });
 
-            case 13:
-              _context.prev = 13;
-              _context.t0 = _context["catch"](1);
+            case 14:
+              _context.prev = 14;
+              _context.t0 = _context["catch"](2);
               console.error('Authorize error:', _context.t0);
-
               return _context.abrupt("return", null);
 
-            case 17:
+            case 18:
             case "end":
               return _context.stop();
           }
         }
-      }, null, null, [[1, 13]]);
+      }, null, null, [[2, 14]]);
     }
   }), (0, _google["default"])({
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET
   }) // ** ...add more providers here
   ],
-
   // ** Please refer to https://next-auth.js.org/configuration/options#session for more `session` options
   session: {
     /*
@@ -114,17 +111,14 @@ var authOptions = {
      * The option to use JSON Web Tokens for session tokens must be enabled to use a custom credentials provider.
      */
     strategy: 'jwt',
-
     // ** Seconds - How long until an idle session expires and is no longer valid
     maxAge: 30 * 24 * 60 * 60 // ** 30 days
 
   },
-
   // ** Please refer to https://next-auth.js.org/configuration/options#pages for more `pages` options
   pages: {
     signIn: '/login'
   },
-
   // ** Please refer to https://next-auth.js.org/configuration/options#callbacks for more `callbacks` options
   callbacks: {
     /*
@@ -134,7 +128,6 @@ var authOptions = {
      */
     jwt: function jwt(_ref) {
       var token, user;
-
       return regeneratorRuntime.async(function jwt$(_context2) {
         while (1) {
           switch (_context2.prev = _context2.next) {
@@ -193,5 +186,4 @@ var authOptions = {
     }
   }
 };
-
 exports.authOptions = authOptions;
