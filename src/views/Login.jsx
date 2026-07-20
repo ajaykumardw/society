@@ -30,8 +30,6 @@ import { valibotResolver } from '@hookform/resolvers/valibot'
 import { email, object, minLength, string, pipe, nonEmpty, maxLength } from 'valibot'
 import classnames from 'classnames'
 
-import { getToken } from "firebase/messaging";
-
 // Component Imports
 import Logo from '@components/layout/shared/Logo'
 import CustomTextField from '@core/components/mui/TextField'
@@ -42,34 +40,6 @@ import themeConfig from '@configs/themeConfig'
 // Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
-
-import { getFirebaseMessaging } from "@/libs/firebase";
-
-const getFCMToken = async () => {
-  if (typeof window === "undefined") return "";
-
-  if (!("Notification" in window)) return "";
-
-  try {
-    const messaging = await getFirebaseMessaging();
-
-    if (!messaging) return "";
-
-    const permission = await Notification.requestPermission();
-
-    if (permission !== "granted") return "";
-
-    const token = await getToken(messaging, {
-      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-    });
-
-    return token;
-  } catch (err) {
-    console.error("FCM Error:", err);
-
-    return "";
-  }
-};
 
 // Styled Custom Components
 const LoginIllustration = styled('img')(({ theme }) => ({
@@ -160,15 +130,9 @@ const Login = ({ mode }) => {
 
     setErrorState(null);
 
-    const fcmToken = await getFCMToken();
-
-    //API
-
-
     const res = await signIn('credentials', {
       email: data.email,
       password: data.password,
-      fcm_token: fcmToken,
       redirect: false
     });
 
