@@ -38,7 +38,6 @@
     "@mui/material-nextjs": "6.2.1",
     "@mui/x-date-pickers": "^8.11.3",
     "@mui/x-date-pickers-pro": "^8.11.3",
-    "@next/swc-win32-x64-msvc": "^16.2.10",
     "@prisma/client": "5.22.0",
     "@reduxjs/toolkit": "2.5.0",
     "@tanstack/match-sorter-utils": "8.19.4",
