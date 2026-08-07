@@ -87,13 +87,13 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     <ScrollWrapper
       {...(isBreakpointReached
         ? {
-            className: 'bs-full overflow-y-auto overflow-x-hidden',
-            onScroll: container => scrollMenu(container, false)
-          }
+          className: 'bs-full overflow-y-auto overflow-x-hidden',
+          onScroll: container => scrollMenu(container, false)
+        }
         : {
-            options: { wheelPropagation: false, suppressScrollX: true },
-            onScrollY: container => scrollMenu(container, true)
-          })}
+          options: { wheelPropagation: false, suppressScrollX: true },
+          onScrollY: container => scrollMenu(container, true)
+        })}
     >
       <Menu
         popoutMenuOffset={{ mainAxis: 23 }}
@@ -252,6 +252,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             <SubMenu label={'Report'} icon={<i className='tabler-graph' />}>
               <MenuItem href={`/${locale}/apps/report/payment-report`}>{'Payment report'}</MenuItem>
               <MenuItem href={`/${locale}/apps/report/financial-report`}>{'Financial report'}</MenuItem>
+              <MenuItem href={`/${locale}/apps/complain-report`}>{'Complain report'}</MenuItem>
             </SubMenu>
           )}
           {permissArray?.isCompany && (
