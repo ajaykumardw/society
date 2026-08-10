@@ -10,6 +10,7 @@ import {
     Card,
     CardContent,
     Button,
+    Chip,
     TextField,
     MenuItem,
     Table,
@@ -271,6 +272,12 @@ export default function ComplaintReportDashboard() {
         4: 'In progress'
     }
 
+    const priorityData = {
+        "1": "High",
+        "2": "Medium",
+        "3": "Low"
+    }
+
     const getStatus = row => {
 
         const status =
@@ -352,21 +359,14 @@ export default function ComplaintReportDashboard() {
                     </Grid>
 
                     {/* Floor */}
-                    <Grid
-                        size={{
-                            xs: 12,
-                            sm: 6,
-                            md: 3
-                        }}
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}
                     >
                         <TextField
                             select
                             label='Floor'
                             size='small'
                             fullWidth
-                            value={
-                                filters.floor
-                            }
+                            value={filters.floor}
                             onChange={e =>
                                 handleFilterChange(
                                     'floor',
@@ -381,12 +381,8 @@ export default function ComplaintReportDashboard() {
                             {data.floors.map(
                                 floor => (
                                     <MenuItem
-                                        key={
-                                            floor._id
-                                        }
-                                        value={
-                                            floor._id
-                                        }
+                                        key={floor._id}
+                                        value={floor._id}
                                     >
                                         {
                                             floor.floor_name ||
@@ -399,13 +395,7 @@ export default function ComplaintReportDashboard() {
                     </Grid>
 
                     {/* Nature */}
-                    <Grid
-                        size={{
-                            xs: 12,
-                            sm: 6,
-                            md: 3
-                        }}
-                    >
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
                             select
                             label='Nature'
@@ -784,6 +774,10 @@ export default function ComplaintReportDashboard() {
                                 </TableCell>
 
                                 <TableCell>
+                                    Priority
+                                </TableCell>
+
+                                <TableCell>
                                     Assigned To
                                 </TableCell>
 
@@ -872,27 +866,35 @@ export default function ComplaintReportDashboard() {
                                                     '-'}
                                             </TableCell>
 
+                                            <TableCell>
+                                                <Chip
+                                                    label={priorityData?.[row?.priority || "3"]}
+                                                    color={
+                                                        row?.priority === "1"
+                                                            ? "error"
+                                                            : row?.priority === "2"
+                                                                ? "warning"
+                                                                : "success"
+                                                    }
+                                                    size="small"
+                                                />
+                                            </TableCell>
+
                                             {/* Assigned */}
                                             <TableCell>
                                                 {getFullName(
                                                     row.assigned_user
                                                 )}
 
-                                                {row
-                                                    .assigned_user
-                                                    ?.phone && (
-                                                        <Typography
-                                                            variant='caption'
-                                                            display='block'
-                                                            color='text.secondary'
-                                                        >
-                                                            {
-                                                                row
-                                                                    .assigned_user
-                                                                    .phone
-                                                            }
-                                                        </Typography>
-                                                    )}
+                                                {row.assigned_user?.phone && (
+                                                    <Typography
+                                                        variant='caption'
+                                                        display='block'
+                                                        color='text.secondary'
+                                                    >
+                                                        {row.assigned_user.phone}
+                                                    </Typography>
+                                                )}
                                             </TableCell>
 
                                             {/* Status */}
@@ -946,6 +948,6 @@ export default function ComplaintReportDashboard() {
                     ]}
                 />
             </Paper>
-        </Box>
+        </Box >
     )
 }
