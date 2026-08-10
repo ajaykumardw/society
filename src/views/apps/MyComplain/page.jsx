@@ -87,6 +87,7 @@ const ComplainModal = ({ open, setIsOpen, fetchComplain }) => {
     nature: pipe(string(), minLength(1, "Nature is required")),
     complaint_type: pipe(string(), minLength(1, "Complaint type is required")),
     category: pipe(string(), minLength(1, "Category is required")),
+    priority: pipe(string(), minLength(1, "Priority is required")),
     description: pipe(string(), minLength(1, "Description is required")),
   });
 
@@ -103,6 +104,7 @@ const ComplainModal = ({ open, setIsOpen, fetchComplain }) => {
       complaint_type: "1",
       category: "",
       description: "",
+      priority: ""
     },
   });
 
@@ -167,6 +169,21 @@ const ComplainModal = ({ open, setIsOpen, fetchComplain }) => {
       toast.error("Something went wrong. Please try again.");
     }
   };
+
+  const priorityData = [
+    {
+      title: "High",
+      value: "1"
+    },
+    {
+      title: "Medium",
+      value: "2"
+    },
+    {
+      title: "Low",
+      value: "3"
+    },
+  ]
 
   return (
     <Dialog
@@ -253,6 +270,27 @@ const ComplainModal = ({ open, setIsOpen, fetchComplain }) => {
                   >
                     {createData && createData.map((item, index) => (
                       <MenuItem key={index} value={item._id}>{item.name}</MenuItem>
+                    ))}
+                  </CustomTextField>
+                )}
+              />
+            </Grid>
+
+            <Grid item size={{ xs: 12 }}>
+              <Controller
+                name="priority"
+                control={control}
+                render={({ field }) => (
+                  <CustomTextField
+                    {...field}
+                    fullWidth
+                    select
+                    label="Priority *"
+                    error={!!errors.priority}
+                    helperText={errors.priority?.message}
+                  >
+                    {priorityData && priorityData.map((item, index) => (
+                      <MenuItem key={index} value={item.value}>{item.title}</MenuItem>
                     ))}
                   </CustomTextField>
                 )}
