@@ -70,11 +70,11 @@ export default function PermissionGuard({ children, locale, element }) {
                     router.push(`/${locale}/dashboards/user/owner`);
                 }
 
-                if (permissions?.notUser || permissions.isCompany) {
+                if (permissions?.notUser || permissions?.isCompany) {
                     router.push(`/${locale}/dashboards/society`);
                 }
 
-                if (permissions?.notUser || permissions.isSuperAdmin) {
+                if (permissions?.notUser || permissions?.isSuperAdmin) {
                     router.push(`/${locale}/dashboards/crm`);
                 }
 
