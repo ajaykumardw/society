@@ -252,7 +252,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             <SubMenu label={'Report'} icon={<i className='tabler-graph' />}>
               <MenuItem href={`/${locale}/apps/report/payment-report`}>{'Payment report'}</MenuItem>
               <MenuItem href={`/${locale}/apps/report/financial-report`}>{'Financial report'}</MenuItem>
-              <MenuItem href={`/${locale}/apps/complain-report`}>{'Complain report'}</MenuItem>
+              <MenuItem href={`/${locale}/apps/report/complain-report`}>{'Complain report'}</MenuItem>
+              <MenuItem href={`/${locale}/apps/report/sla-report`}>{'SLA report'}</MenuItem>
             </SubMenu>
           )}
           {permissArray?.isCompany && (
