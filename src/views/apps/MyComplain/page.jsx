@@ -881,7 +881,7 @@ const EscalateModal = ({ open, setOpen, id }) => {
   )
 }
 
-const ReviewFeedbackDialog = ({ open, setOpen, setComplainId, complainId, token, url }) => {
+const ReviewFeedbackDialog = ({ open, setOpen, setComplainId, complainId, token, url, fetchComplain }) => {
 
   const [rating, setRating] = useState(5)
   const [isSatisfied, setIsSatisfied] = useState('yes')
@@ -921,8 +921,9 @@ const ReviewFeedbackDialog = ({ open, setOpen, setComplainId, complainId, token,
       toast.success('Review submitted successfully', {
         autoClose: 1000
       })
-
+      fetchComplain()
       onClose()
+
     } catch (error) {
       toast.error(error.message || 'Something went wrong')
       console.error(error)
@@ -1004,15 +1005,7 @@ const ReviewFeedbackDialog = ({ open, setOpen, setComplainId, complainId, token,
             onChange={(e) => setFeedback(e.target.value)}
           />
 
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={reopenRequest}
-                onChange={(e) => setReopenRequest(e.target.checked)}
-              />
-            }
-            label='Request to reopen this complaint'
-          />
+
         </Stack>
       </DialogContent>
 
@@ -1644,6 +1637,7 @@ const ComplainTable = () => {
         complainId={selectComplainId}
         token={token}
         url={API_URL}
+        fetchComplain={fetchComplain}
       />
 
       {/* Add Complaint */}

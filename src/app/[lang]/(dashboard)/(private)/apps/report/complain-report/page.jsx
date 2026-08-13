@@ -12,9 +12,11 @@ import {
     Button,
     Chip,
     TextField,
+    Rating,
     MenuItem,
     Table,
     TableBody,
+    Tooltip,
     TableCell,
     TableContainer,
     TableHead,
@@ -781,6 +783,8 @@ export default function ComplaintReportDashboard() {
                                     Assigned To
                                 </TableCell>
 
+                                <TableCell>Rating</TableCell>
+
                                 <TableCell>
                                     Status
                                 </TableCell>
@@ -894,6 +898,26 @@ export default function ComplaintReportDashboard() {
                                                     >
                                                         {row.assigned_user.phone}
                                                     </Typography>
+                                                )}
+                                            </TableCell>
+
+                                            <TableCell>
+                                                {row?.feedbackLog?.rating ? (
+                                                    <Rating
+                                                        value={row.feedbackLog.rating}
+                                                        readOnly
+                                                        size="small"
+                                                        sx={{
+                                                            "& .MuiRating-iconFilled": {
+                                                                color: "#fbc02d",
+                                                            },
+                                                            "& .MuiRating-iconEmpty": {
+                                                                color: "rgba(255,255,255,0.3)", // if tooltip background is dark
+                                                            },
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Typography>No Rating Found</Typography>
                                                 )}
                                             </TableCell>
 
