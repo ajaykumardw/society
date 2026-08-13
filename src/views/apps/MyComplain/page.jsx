@@ -7,6 +7,10 @@ import {
   FormLabel,
   MenuItem,
   Button,
+  Stack,
+  Divider,
+  Rating,
+  TextField,
   Dialog,
   RadioGroup,
   FormControlLabel,
@@ -877,42 +881,181 @@ const EscalateModal = ({ open, setOpen, id }) => {
   )
 }
 
-const ComplainTable = () => {
-  const { data: session } = useSession()
+const ReviewFeedbackDialog = ({ open, setOpen, setComplainId, complainId, token, url }) => {
 
+  const [rating, setRating] = useState(5)
+  const [isSatisfied, setIsSatisfied] = useState('yes')
+  const [feedback, setFeedback] = useState('')
+  const [reopenRequest, setReopenRequest] = useState(false)
+
+  const onClose = () => {
+    setOpen(false)
+    setComplainId()
+  }
+
+  const handleSubmit = async () => {
+    const payload = {
+      rating,
+      is_satisfied: isSatisfied === 'yes',
+      feedback,
+      complainId,
+      reopen_request: reopenRequest
+    }
+
+    try {
+      const response = await fetch(`${url}/user/review/feedback/data`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit review')
+      }
+
+      toast.success('Review submitted successfully', {
+        autoClose: 1000
+      })
+
+      onClose()
+    } catch (error) {
+      toast.error(error.message || 'Something went wrong')
+      console.error(error)
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth='sm'
+      sx={{
+        '& .MuiDialog-paper': {
+          overflow: 'visible'
+        }
+      }}
+    >
+      <DialogCloseButton onClick={onClose}>
+        <i className='tabler-x' />
+      </DialogCloseButton>
+      <DialogTitle>
+        Complaint Feedback
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <Stack spacing={3}>
+          <Typography variant='body2' color='text.secondary'>
+            Your complaint has been resolved. Please share your experience.
+          </Typography>
+
+          <Divider />
+
+          <Stack spacing={1}>
+            <Typography fontWeight={600}>
+              Rate your experience
+            </Typography>
+
+            <Rating
+              value={rating}
+              size='large'
+              onChange={(event, newValue) => {
+                setRating(newValue || 1)
+              }}
+            />
+          </Stack>
+
+          <Stack spacing={1}>
+            <Typography fontWeight={600}>
+              Are you satisfied with the resolution?
+            </Typography>
+
+            <RadioGroup
+              row
+              value={isSatisfied}
+              onChange={(e) => setIsSatisfied(e.target.value)}
+            >
+              <FormControlLabel
+                value='yes'
+                control={<Radio />}
+                label='Yes'
+              />
+
+              <FormControlLabel
+                value='no'
+                control={<Radio />}
+                label='No'
+              />
+            </RadioGroup>
+          </Stack>
+
+          <TextField
+            fullWidth
+            multiline
+            minRows={4}
+            label='Feedback'
+            placeholder='Tell us about your experience...'
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={reopenRequest}
+                onChange={(e) => setReopenRequest(e.target.checked)}
+              />
+            }
+            label='Request to reopen this complaint'
+          />
+        </Stack>
+      </DialogContent>
+
+      <DialogActions style={{ marginTop: "10px", display: "flex", justifyContent: "center", alignItems: "center" }}>
+
+        <Button
+          variant='contained'
+          onClick={handleSubmit}
+        >
+          Submit Feedback
+        </Button>
+
+        <Button
+          variant='outlined'
+          onClick={onClose}
+        >
+          Cancel
+        </Button>
+
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+const ComplainTable = () => {
+
+  const { data: session } = useSession()
   const token = session?.user?.token
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-  const [rowSelection, setRowSelection] =
-    useState({})
-
+  const [rowSelection, setRowSelection] = useState({})
   const [data, setData] = useState([])
-
-  const [openDialog, setOpenDialog] =
-    useState(false)
-
-  const [deleteDialogOpen, setDeleteDialogOpen] =
-    useState(false)
-
-  const [selectedComplainId, setSelectedComplainId] =
-    useState(null)
-
-  const [isOpen, setIsOpen] =
-    useState(false)
-
-  const [code, setCode] =
-    useState(null)
-
-  const [complainId, setComplainId] =
-    useState(null)
-
-  const [openEscalateModal, setOpenEscalateModal] =
-    useState(false)
-
-  const [currentComplainId, setCurrentComplainId] =
-    useState(null)
+  const [openDialog, setOpenDialog] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [selectedComplainId, setSelectedComplainId] = useState(null)
+  const [isOpen, setIsOpen] = useState(false)
+  const [code, setCode] = useState(null)
+  const [complainId, setComplainId] = useState(null)
+  const [openEscalateModal, setOpenEscalateModal] = useState(false)
+  const [currentComplainId, setCurrentComplainId] = useState(null)
+  const [openFeedbackModal, setOpenFeedbackModal] = useState(false)
+  const [selectComplainId, setSelectComplainId] = useState();
 
   const fetchComplain = async () => {
     try {
@@ -948,17 +1091,11 @@ const ComplainTable = () => {
     }
   }
 
-
   useEffect(() => {
     if (API_URL && token) {
       fetchComplain()
     }
   }, [API_URL, token])
-
-
-  /* =====================================================
-     Delete Complaint
-  ===================================================== */
 
   const handleDelete = async () => {
     if (!selectedComplainId) {
@@ -1010,15 +1147,8 @@ const ComplainTable = () => {
     }
   }
 
-
-  /* =====================================================
-     Table Columns
-  ===================================================== */
-
   const columns = useMemo(
     () => [
-      /* Select */
-
       {
         id: 'select',
 
@@ -1050,12 +1180,9 @@ const ComplainTable = () => {
 
 
       /* Sr No */
-
       columnHelper.display({
         id: 'sr_no',
-
         header: 'Sr No',
-
         cell: ({ row }) => (
           <Typography>
             {row.index + 1}
@@ -1063,9 +1190,7 @@ const ComplainTable = () => {
         )
       }),
 
-
       /* Ticket */
-
       columnHelper.accessor('ticket', {
         header: 'Ticket',
 
@@ -1100,9 +1225,7 @@ const ComplainTable = () => {
         )
       }),
 
-
       /* Complaint Type */
-
       columnHelper.accessor(
         'complaint_type',
         {
@@ -1119,9 +1242,7 @@ const ComplainTable = () => {
         }
       ),
 
-
       /* Category */
-
       columnHelper.accessor(
         'category',
         {
@@ -1136,9 +1257,7 @@ const ComplainTable = () => {
         }
       ),
 
-
       /* Assigned User */
-
       columnHelper.accessor(
         'assigned_user',
         {
@@ -1158,9 +1277,7 @@ const ComplainTable = () => {
         }
       ),
 
-
       /* Description */
-
       columnHelper.accessor(
         'description',
         {
@@ -1175,9 +1292,33 @@ const ComplainTable = () => {
         }
       ),
 
+      columnHelper.accessor('review_feedback', {
+        header: 'Review Feedback',
+
+        cell: ({ row }) => {
+          const hasFeedback =
+            Array.isArray(row.original?.feedbackLog)
+              ? row.original.feedbackLog.length > 0
+              : !!row.original?.feedbackLog?._id
+
+          return (
+            <Typography display="flex" justifyContent="center" alignItems="center">
+              {row.original?.latest_complain_user?.complaint_status === "3" && !hasFeedback && (
+                <i
+                  className="tabler-send"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setOpenFeedbackModal(true)
+                    setSelectComplainId(row.original._id)
+                  }}
+                />
+              )}
+            </Typography>
+          )
+        }
+      }),
 
       /* Complaint Status */
-
       columnHelper.accessor(
         'complain_status',
         {
@@ -1206,9 +1347,7 @@ const ComplainTable = () => {
         }
       ),
 
-
       /* Created At */
-
       columnHelper.accessor(
         'created_at',
         {
@@ -1226,9 +1365,7 @@ const ComplainTable = () => {
         }
       ),
 
-
       /* Modified At */
-
       columnHelper.accessor(
         'updated_at',
         {
@@ -1246,9 +1383,7 @@ const ComplainTable = () => {
         }
       ),
 
-
       /* Action */
-
       columnHelper.display({
         id: 'action',
 
@@ -1321,11 +1456,6 @@ const ComplainTable = () => {
     []
   )
 
-
-  /* =====================================================
-     React Table
-  ===================================================== */
-
   const table = useReactTable({
     data,
     columns,
@@ -1370,11 +1500,6 @@ const ComplainTable = () => {
     getFacetedMinMaxValues:
       getFacetedMinMaxValues()
   })
-
-
-  /* =====================================================
-     Render
-  ===================================================== */
 
   return (
     <>
@@ -1512,6 +1637,14 @@ const ComplainTable = () => {
         </CardContent>
       </Card>
 
+      <ReviewFeedbackDialog
+        open={openFeedbackModal}
+        setOpen={setOpenFeedbackModal}
+        setComplainId={setSelectComplainId}
+        complainId={selectComplainId}
+        token={token}
+        url={API_URL}
+      />
 
       {/* Add Complaint */}
 
