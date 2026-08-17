@@ -137,6 +137,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
                 </SubMenu>
               )}
 
+              <MenuItem href={`/${locale}/apps/user/amenities`} icon={<i className='tabler-building-community' />}>{'Amenities'}</MenuItem>
+
               {permissArray?.isUser && permissArray?.['hasComplainPermission'] && (
                 <MenuItem key='Complain' href={`/${locale}/apps/my-complain`}>
                   <i className='tabler-report' style={{ marginRight: 8, fontSize: '1.2rem' }} />
