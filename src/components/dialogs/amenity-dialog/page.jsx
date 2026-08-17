@@ -38,6 +38,7 @@ const AmenityDialog = ({ open, setOpen, selectedZone, fetchZoneData }) => {
             booking_required: optional(boolean()),
             start_time: optional(string()),
             end_time: optional(string()),
+            time_diffrence: optional(string()),
             multiple_bookings: optional(boolean()),
             persons_allowed: optional(string())
         }),
@@ -58,6 +59,15 @@ const AmenityDialog = ({ open, setOpen, selectedZone, fetchZoneData }) => {
                 return true
             }, 'End Time is required'),
             ['end_time']
+        ),
+        forward(
+            check(data => {
+                if (data.booking_required) {
+                    if (!data.time_diffrence || data.time_diffrence.trim() === '') return false
+                }
+                return true
+            }, 'Time Diffrence is required'),
+            ['time_diffrence']
         ),
         forward(
             check(data => {
@@ -109,7 +119,8 @@ const AmenityDialog = ({ open, setOpen, selectedZone, fetchZoneData }) => {
             start_time: selectedZone?.start_time || '',
             end_time: selectedZone?.end_time || '',
             multiple_bookings: selectedZone?.multiple_bookings || false,
-            persons_allowed: selectedZone?.persons_allowed || ''
+            persons_allowed: selectedZone?.persons_allowed || '',
+            time_diffrence: selectedZone?.time_diffrence || ''
         }
     })
 
@@ -125,7 +136,8 @@ const AmenityDialog = ({ open, setOpen, selectedZone, fetchZoneData }) => {
                 start_time: selectedZone?.start_time || '',
                 end_time: selectedZone?.end_time || '',
                 multiple_bookings: selectedZone?.is_multiple_booking_allowed || false,
-                persons_allowed: String(selectedZone?.no_of_person) || ''
+                persons_allowed: String(selectedZone?.no_of_person) || '',
+                time_diffrence: String(selectedZone?.time_diffrence) || ''
             })
         }
     }, [selectedZone, reset])
@@ -243,7 +255,7 @@ const AmenityDialog = ({ open, setOpen, selectedZone, fetchZoneData }) => {
                         {/* Conditional Fields visible only when 'Booking Required' is checked */}
                         {bookingRequired && (
                             <>
-                                <Grid size={{ xs: 12, sm: 4 }}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Controller
                                         name="start_time"
                                         control={control}
@@ -262,7 +274,7 @@ const AmenityDialog = ({ open, setOpen, selectedZone, fetchZoneData }) => {
                                     />
                                 </Grid>
 
-                                <Grid size={{ xs: 12, sm: 4 }}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Controller
                                         name="end_time"
                                         control={control}
@@ -277,6 +289,31 @@ const AmenityDialog = ({ open, setOpen, selectedZone, fetchZoneData }) => {
                                                 error={!!errors?.end_time}
                                                 helperText={errors?.end_time?.message}
                                             />
+                                        )}
+                                    />
+                                </Grid>
+
+                                <Grid size={{ xs: 12 }}>
+                                    <Controller
+                                        name="time_diffrence"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <CustomTextField
+                                                {...field}
+                                                select
+                                                fullWidth
+                                                label="Time Diffrence"
+                                                required
+                                                error={!!errors?.time_diffrence}
+                                                helperText={errors?.time_diffrence?.message}
+                                            >
+                                                <MenuItem value="10">10 minute</MenuItem>
+                                                <MenuItem value="20">20 minute</MenuItem>
+                                                <MenuItem value="30">30 minute</MenuItem>
+                                                <MenuItem value="40">40 minute</MenuItem>
+                                                <MenuItem value="50">50 minute</MenuItem>
+                                                <MenuItem value="60">60 minute</MenuItem>
+                                            </CustomTextField>
                                         )}
                                     />
                                 </Grid>

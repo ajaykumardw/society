@@ -114,17 +114,31 @@ const BookingTimeSlotDialog = ({ open, setOpen, selectedZone, fetchZoneData }) =
                 am => am._id === selectedAmenity
             );
 
-            setSelectedCurrentAmenity(amenity)
+            setSelectedCurrentAmenity(amenity);
 
-            const startTime = amenity?.start_time;
-            const endTime = amenity?.end_time;
+            if (amenity?.start_time && amenity?.end_time) {
+                let slots = generateTimeSlots(
+                    amenity.start_time,
+                    amenity.end_time,
+                    amenity.time_diffrence
+                );
 
-            if (startTime && endTime) {
-                const slots = generateTimeSlots(startTime, endTime, 20);
+                // While editing, include already saved booking times
+                if (selectedZone?.custom_time?.length) {
+                    slots = [...new Set([...slots, ...selectedZone.custom_time])];
+
+                    // Optional: sort by time
+                    slots.sort((a, b) => {
+                        const d1 = new Date(`1970-01-01 ${a}`);
+                        const d2 = new Date(`1970-01-01 ${b}`);
+                        return d1 - d2;
+                    });
+                }
+
                 setSelectedTimeSlot(slots);
             }
         }
-    }, [selectedAmenity, createData]);
+    }, [selectedAmenity, createData, selectedZone]);
 
     const {
         control,
