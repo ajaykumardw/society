@@ -38,6 +38,7 @@ import tableStyles from '@core/styles/table.module.css'
 import AmenityBookingDialog from '@/components/dialogs/amenity-booking-dialog/page'
 
 import { usePermissionList } from '@/utils/getPermission'
+import formatTime from '@/utils/formatTime'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value)
@@ -190,7 +191,7 @@ const AmenityBookingTable = ({ tableData, fetchZoneData }) => {
         header: "Start Time",
         cell: ({ row }) => (
           <Typography className="capitalize" color="text.primary">
-            {row.original.booking_start_time}
+            {formatTime(row.original.booking_start_time)}
           </Typography>
         ),
       })
@@ -203,7 +204,7 @@ const AmenityBookingTable = ({ tableData, fetchZoneData }) => {
         header: "End Time",
         cell: ({ row }) => (
           <Typography className="capitalize" color="text.primary">
-            {row.original.booking_end_time}
+            {formatTime(row.original.booking_end_time)}
           </Typography>
         ),
       })

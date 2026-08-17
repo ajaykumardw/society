@@ -187,7 +187,6 @@ const BookingTimeSlotDialog = ({ open, setOpen, selectedZone, fetchZoneData }) =
     }
 
     // Pre-populate form fields and state variables when editing an existing zone
-    // Pre-populate form fields and state variables when editing an existing zone
     useEffect(() => {
         if (selectedZone && createData) {
             const amenityId = selectedZone?.amenity_id?._id || selectedZone?.amenity_id;
