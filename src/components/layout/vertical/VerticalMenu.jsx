@@ -146,6 +146,10 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
                 </MenuItem>
               )}
 
+              {permissArray?.isUser && permissArray?.isSecurityGuard && (
+                <MenuItem href={`/${locale}/apps/user/parcel`} icon={<i className='tabler-package' />}>Parcel Management</MenuItem>
+              )}
+
               {permissArray?.isUser && permissArray?.['hasTicketPermission'] && (
                 <MenuItem key='Complain resolved' href={`/${locale}/apps/ticket`}>
                   <i className='tabler-ticket' style={{ marginRight: 8, fontSize: '1.2rem' }} />
