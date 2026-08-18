@@ -69,6 +69,7 @@
     "jspdf": "^3.0.1",
     "jszip": "^3.10.1",
     "keen-slider": "6.8.6",
+    "lucide-react": "^1.31.0",
     "mapbox-gl": "3.9.0",
     "negotiator": "1.0.0",
     "next": "^16.2.3",

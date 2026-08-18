@@ -64,12 +64,17 @@ const ParcelPage = () => {
         floor_id: '',
         resident_id: '',
         courier_company_id: '1',
+        product_name: "",
         trackingNumber: '',
         notes: ''
     });
 
 
     const parcelSchema = object({
+        product_name: pipe(
+            string(),
+            minLength(1, "Product name is required")
+        ),
         floor_id: pipe(
             string(),
             minLength(1, 'Floor is required')
@@ -98,6 +103,7 @@ const ParcelPage = () => {
     } = useForm({
         resolver: valibotResolver(parcelSchema),
         defaultValues: {
+            product_name: "",
             floor_id: '',
             resident_id: '',
             courier_company_id: '1',
@@ -170,17 +176,11 @@ const ParcelPage = () => {
         }
     }, [API_URL, token]);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        if (name) {
-            setFormData({ ...formData, [name]: value });
-        }
-    };
-
     const handleLogParcel = async (data) => {
         try {
 
             const payload = {
+                product_name: data?.product_name,
                 floor_id: data.floor_id,
                 resident_id: data.resident_id,
                 courier_company: data.courier_company_id,
@@ -217,7 +217,6 @@ const ParcelPage = () => {
         }
     };
 
-    // Verifies OTP against the backend and marks the parcel delivered there.
     const handleVerifyOtp = async (parcelId) => {
         try {
             setOtpSubmitting(true);
@@ -257,7 +256,6 @@ const ParcelPage = () => {
         }
     };
 
-    // Marks the parcel as "Left at Gate" via the backend so it persists across reloads.
     const handleLeaveAtGate = async (parcelId) => {
         try {
             setGateUpdatingId(parcelId);
@@ -401,6 +399,28 @@ const ParcelPage = () => {
 
                                     <Box component="form" onSubmit={handleSubmit(handleLogParcel)} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }} noValidate>
                                         <Grid container spacing={2}>
+
+                                            <Controller
+                                                name="product_name"
+                                                control={control}
+                                                defaultValue=""
+                                                render={({ field, fieldState: { error } }) => (
+                                                    <TextField
+                                                        {...field}
+                                                        fullWidth
+                                                        size="small"
+                                                        label="Product Name"
+                                                        placeholder="Enter product name"
+                                                        error={!!error}
+                                                        helperText={error?.message}
+                                                        sx={{
+                                                            "& .MuiOutlinedInput-root": {
+                                                                borderRadius: 2.5,
+                                                            },
+                                                        }}
+                                                    />
+                                                )}
+                                            />
 
                                             <Controller
                                                 name="floor_id"
