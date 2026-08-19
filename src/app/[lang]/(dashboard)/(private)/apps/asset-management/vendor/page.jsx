@@ -146,13 +146,15 @@ const VendorDialogComponent = ({
     }
 
     useEffect(() => {
+        
         if (vendor) {
+
             reset({
                 company_Name: vendor.company_Name || "",
                 phone: String(vendor.phone) || "",
                 email: vendor.email || "",
                 address: vendor.address || "",
-                status: vendor.status || "",
+                status: vendor.status ?? "",
                 gst_no: vendor.gst_no || ""
             });
         } else {
