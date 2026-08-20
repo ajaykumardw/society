@@ -2626,6 +2626,7 @@ const AcitivityCard = () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     const { data: session } = useSession();
     const token = session?.user?.token;
+    
     const { lang: locale, mId: mId } = useParams()
     const [open, setOpen] = useState(false);
     const [selected, setSelected] = useState();

@@ -173,6 +173,13 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
                 </MenuItem>
               )}
 
+              {permissArray && permissArray?.['isUser'] && permissArray?.['isOfficeBearer'] && (
+                <MenuItem key='inspection_result' href={`/${locale}/apps/user/inspection`}>
+                  <i className='tabler-receipt' style={{ marginRight: 8, fontSize: '1.2rem' }} />
+                  Inspection
+                </MenuItem>
+              )}
+
               {permissArray && permissArray?.['isUser'] && permissArray?.['hasEventPermission'] && (
                 <MenuItem key='my-event' href={`/${locale}/apps/user/event`}>
                   <i className='tabler-calendar' style={{ marginRight: 8, fontSize: '1.2rem' }} />

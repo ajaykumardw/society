@@ -63,6 +63,10 @@ const getStatusColor = (status) => {
 const InspectionScheduleComponent = ({ open, setOpen, fetchData, data, selectedScheduleData, token }) => {
 
     const InspectionScheduleValidationSchema = object({
+        asset_id: pipe(
+            string(),
+            minLength(1, "Asset is required")
+        ),
         inspection_template_id: pipe(
             string(),
             minLength(1, "Inspection Template is required")
@@ -98,6 +102,7 @@ const InspectionScheduleComponent = ({ open, setOpen, fetchData, data, selectedS
     } = useForm({
         resolver: valibotResolver(InspectionScheduleValidationSchema),
         defaultValues: {
+            asset_id: "",
             inspection_template_id: "",
             assigned_to: "",
             frequency: "1",
@@ -214,6 +219,31 @@ const InspectionScheduleComponent = ({ open, setOpen, fetchData, data, selectedS
 
                 <DialogContent dividers>
                     <Grid container spacing={2} mt={1}>
+
+                        <Grid item size={{ xs: 12, sm: 6 }}>
+                            <Controller
+                                name="asset_id"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        select
+                                        fullWidth
+                                        size="small"
+                                        required
+                                        label="Asset"
+                                        error={!!errors.asset_id}
+                                        helperText={errors.asset_id?.message}
+                                    >
+                                        {data?.asset?.map(item => (
+                                            <MenuItem key={item._id} value={item._id}>
+                                                {item.name}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
+                        </Grid>
 
                         {/* Inspection Template */}
                         <Grid item size={{ xs: 12, sm: 6 }}>
@@ -503,6 +533,7 @@ export default function AMCLogsPage() {
                 <Table>
                     <TableHead sx={{ bgcolor: '#f1f5f9' }}>
                         <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Asset</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Inspection template</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Assigned To</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Contact No</TableCell>
@@ -534,6 +565,9 @@ export default function AMCLogsPage() {
                         ) : (
                             paginatedData.map((amc) => (
                                 <TableRow key={amc._id}>
+                                    <TableCell sx={{ fontWeight: 500 }}>
+                                        {amc?.asset_id?.name}
+                                    </TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>
                                         {amc?.inspection_template_id?.name}
                                     </TableCell>
