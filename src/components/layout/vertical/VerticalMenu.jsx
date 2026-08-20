@@ -197,11 +197,12 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           )}
           {permissArray?.isCompany && (
             <SubMenu label={'Asset Management'} icon={<i className='tabler-receipt' />}>
-              <MenuItem href={`/${locale}/apps/asset-management`}>{'List'}</MenuItem>
-              <MenuItem href={`/${locale}/apps/asset-management/vendor`}>{'Vendor'}</MenuItem>
               <MenuItem href={`/${locale}/apps/asset-management/location-category`}>{'Locaion & Category'}</MenuItem>
-              <MenuItem href={`/${locale}/apps/asset-management/inspection`}>{'inspection'}</MenuItem>
+              <MenuItem href={`/${locale}/apps/asset-management/vendor`}>{'Vendor'}</MenuItem>
               <MenuItem href={`/${locale}/apps/asset-management/amc`}>{'AMC'}</MenuItem>
+              <MenuItem href={`/${locale}/apps/asset-management/inspection`}>{'inspection'}</MenuItem>
+              <MenuItem href={`/${locale}/apps/asset-management/inspection-schedule`}>{'inspection Schedule'}</MenuItem>
+              <MenuItem href={`/${locale}/apps/asset-management`}>{'View Asset'}</MenuItem>
             </SubMenu>
           )}
           {permissArray?.isCompany &&

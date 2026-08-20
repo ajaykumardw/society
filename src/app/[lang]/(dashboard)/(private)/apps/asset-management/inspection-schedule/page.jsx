@@ -45,41 +45,49 @@ import formatTime from '@/utils/formatTime';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }) => {
+const getStatusColor = (status) => {
+    switch (status) {
+        case "Pending":
+            return "warning";
+        case "In Progress":
+            return "info";
+        case "Completed":
+            return "success";
+        case "Cancelled":
+            return "error";
+        default:
+            return "default";
+    }
+};
 
-    const AMCValidationSchema = object({
-        asset_id: pipe(
+const InspectionScheduleComponent = ({ open, setOpen, fetchData, data, selectedScheduleData, token }) => {
+
+    const InspectionScheduleValidationSchema = object({
+        inspection_template_id: pipe(
             string(),
-            minLength(1, "Asset is required")
+            minLength(1, "Inspection Template is required")
         ),
-        vendor_id: pipe(
+        assigned_to: pipe(
             string(),
-            minLength(1, "Vendor is required")
+            minLength(1, "Office Bearer is required")
         ),
-        contact_no: optional(string()),
-        start_date: pipe(
+        frequency: pipe(
             string(),
-            minLength(1, "Start Date is required")
+            minLength(1, "Frequency is required")
         ),
-        end_date: pipe(
+        scheduled_date: pipe(
             string(),
-            minLength(1, "End Date is required")
+            minLength(1, "Scheduled Date is required")
         ),
-        amount: pipe(
+        due_date: pipe(
             string(),
-            minLength(1, "Amount is required"),
-            transform(Number),
-            number(),
-            minValue(1, "Amount must be greater than 0")
-        ),
-        service_frequency: pipe(
-            string(),
-            minLength(1, "Service Frequency is required")
+            minLength(1, "Due Date is required")
         ),
         status: pipe(
             string(),
             minLength(1, "Status is required")
-        )
+        ),
+        remarks: optional(string())
     });
 
     const {
@@ -88,16 +96,15 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
         reset,
         formState: { errors, isSubmitting }
     } = useForm({
-        resolver: valibotResolver(AMCValidationSchema),
+        resolver: valibotResolver(InspectionScheduleValidationSchema),
         defaultValues: {
-            asset_id: "",
-            vendor_id: "",
-            contact_no: "",
-            start_date: "",
-            end_date: "",
-            amount: "",
-            service_frequency: "1",
-            status: "1"
+            inspection_template_id: "",
+            assigned_to: "",
+            frequency: "1",
+            scheduled_date: "",
+            due_date: "",
+            status: "Pending",
+            remarks: ""
         }
     });
 
@@ -119,16 +126,17 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
                 return;
             }
 
-            const method = selectedAMCData ? "PUT" : "POST";
-            const save_url = selectedAMCData ? `amc/update/data/${selectedAMCData?._id}` : `amc/save/data`;
 
-            // Clean token of any potential hidden whitespace/newlines
-            const cleanToken = token ?? "";
+            const method = selectedScheduleData ? "PUT" : "POST";
+
+            const save_url = selectedScheduleData
+                ? `inspection-schedule/update/${selectedScheduleData._id}`
+                : `inspection-schedule/save`;
 
             const response = await fetch(`${API_URL}/company/${save_url}`, {
                 method,
                 headers: {
-                    Authorization: `Bearer ${cleanToken}`,
+                    Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(data)
@@ -150,25 +158,37 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
             console.error("Fetch execution error:", error);
         }
     };
-
     useEffect(() => {
-        if (open) {
-            if (selectedAMCData) {
-                reset({ ...selectedAMCData, asset_id: selectedAMCData?.asset_id?._id, vendor_id: selectedAMCData?.vendor_id?._id, amount: String(selectedAMCData?.amount || "") })
-            } else {
-                reset({
-                    asset_id: "",
-                    vendor_id: "",
-                    contact_no: "",
-                    start_date: "",
-                    end_date: "",
-                    amount: "",
-                    service_frequency: "1",
-                    status: "1"
-                })
-            }
+        if (!open) return;
+
+        if (selectedScheduleData) {
+            reset({
+                asset_id: selectedScheduleData?.asset_id?._id || "",
+                inspection_template_id: selectedScheduleData?.inspection_template_id?._id || "",
+                assigned_to: selectedScheduleData?.assigned_to?._id || "",
+                frequency: selectedScheduleData?.frequency || "1",
+                scheduled_date: selectedScheduleData?.scheduled_date
+                    ? selectedScheduleData.scheduled_date.split("T")[0]
+                    : "",
+                due_date: selectedScheduleData?.due_date
+                    ? selectedScheduleData.due_date.split("T")[0]
+                    : "",
+                status: selectedScheduleData?.status || "Pending",
+                remarks: selectedScheduleData?.remarks || ""
+            });
+        } else {
+            reset({
+                asset_id: "",
+                inspection_template_id: "",
+                assigned_to: "",
+                frequency: "1",
+                scheduled_date: "",
+                due_date: "",
+                status: "Pending",
+                remarks: ""
+            });
         }
-    }, [open, selectedAMCData])
+    }, [open, selectedScheduleData, reset]);
 
     return (
         <Dialog
@@ -185,7 +205,7 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
                 }
             }}
         >
-            <DialogTitle>{selectedAMCData ? "Edit" : "Add"} AMC Contract</DialogTitle>
+            <DialogTitle>{selectedScheduleData ? "Edit" : "Add"} Inspection Schedule</DialogTitle>
 
             <DialogCloseButton onClick={handleClose}>
                 <i className='tabler-x' />
@@ -194,25 +214,26 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
 
                 <DialogContent dividers>
                     <Grid container spacing={2} mt={1}>
-                        {/* Asset */}
+
+                        {/* Inspection Template */}
                         <Grid item size={{ xs: 12, sm: 6 }}>
                             <Controller
-                                name="asset_id"
+                                name="inspection_template_id"
                                 control={control}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
                                         select
                                         fullWidth
-                                        required
                                         size="small"
-                                        label="Select Asset"
-                                        error={!!errors.asset_id}
-                                        helperText={errors.asset_id?.message}
+                                        required
+                                        label="Inspection Template"
+                                        error={!!errors.inspection_template_id}
+                                        helperText={errors.inspection_template_id?.message}
                                     >
-                                        {data?.assets?.map((asset) => (
-                                            <MenuItem key={asset._id} value={asset._id}>
-                                                {asset.name}
+                                        {data?.inspectionTemplate?.map(item => (
+                                            <MenuItem key={item._id} value={item._id}>
+                                                {item.name}
                                             </MenuItem>
                                         ))}
                                     </TextField>
@@ -220,25 +241,25 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
                             />
                         </Grid>
 
-                        {/* Vendor */}
+                        {/* Assigned Office Bearer */}
                         <Grid item size={{ xs: 12, sm: 6 }}>
                             <Controller
-                                name="vendor_id"
+                                name="assigned_to"
                                 control={control}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
                                         select
-                                        required
                                         fullWidth
                                         size="small"
-                                        label="Select Vendor"
-                                        error={!!errors.vendor_id}
-                                        helperText={errors.vendor_id?.message}
+                                        required
+                                        label="Assign To"
+                                        error={!!errors.assigned_to}
+                                        helperText={errors.assigned_to?.message}
                                     >
-                                        {data?.vendors?.map((vendor) => (
-                                            <MenuItem key={vendor._id} value={vendor._id}>
-                                                {vendor.company_Name} ({vendor?.phone})
+                                        {data?.users?.map(user => (
+                                            <MenuItem key={user._id} value={user._id}>
+                                                {user.first_name} {user.last_name} ({user.phone})
                                             </MenuItem>
                                         ))}
                                     </TextField>
@@ -246,49 +267,10 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
                             />
                         </Grid>
 
-                        {/* Contact */}
+                        {/* Scheduled Date */}
                         <Grid item size={{ xs: 12, sm: 6 }}>
                             <Controller
-                                name="contact_no"
-                                control={control}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        fullWidth
-                                        size="small"
-                                        label="Contact Number"
-                                        placeholder="+1-555-0192"
-                                        error={!!errors.contact_no}
-                                        helperText={errors.contact_no?.message}
-                                    />
-                                )}
-                            />
-                        </Grid>
-
-                        {/* Amount */}
-                        <Grid item size={{ xs: 12, sm: 6 }}>
-                            <Controller
-                                name="amount"
-                                control={control}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        type="number"
-                                        fullWidth
-                                        required
-                                        size="small"
-                                        label="Amount (₹)"
-                                        error={!!errors.amount}
-                                        helperText={errors.amount?.message}
-                                    />
-                                )}
-                            />
-                        </Grid>
-
-                        {/* Start Date */}
-                        <Grid item size={{ xs: 12, sm: 6 }}>
-                            <Controller
-                                name="start_date"
+                                name="scheduled_date"
                                 control={control}
                                 render={({ field }) => (
                                     <TextField
@@ -297,40 +279,40 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
                                         fullWidth
                                         size="small"
                                         required
-                                        label="Start Date"
+                                        label="Scheduled Date"
                                         InputLabelProps={{ shrink: true }}
-                                        error={!!errors.start_date}
-                                        helperText={errors.start_date?.message}
+                                        error={!!errors.scheduled_date}
+                                        helperText={errors.scheduled_date?.message}
                                     />
                                 )}
                             />
                         </Grid>
 
-                        {/* End Date */}
+                        {/* Due Date */}
                         <Grid item size={{ xs: 12, sm: 6 }}>
                             <Controller
-                                name="end_date"
+                                name="due_date"
                                 control={control}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
                                         type="date"
                                         fullWidth
-                                        required
                                         size="small"
-                                        label="End Date"
+                                        required
+                                        label="Due Date"
                                         InputLabelProps={{ shrink: true }}
-                                        error={!!errors.end_date}
-                                        helperText={errors.end_date?.message}
+                                        error={!!errors.due_date}
+                                        helperText={errors.due_date?.message}
                                     />
                                 )}
                             />
                         </Grid>
 
-                        {/* Service Frequency */}
+                        {/* Frequency */}
                         <Grid item size={{ xs: 12, sm: 6 }}>
                             <Controller
-                                name="service_frequency"
+                                name="frequency"
                                 control={control}
                                 render={({ field }) => (
                                     <TextField
@@ -338,20 +320,15 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
                                         select
                                         fullWidth
                                         size="small"
-                                        label="Service Frequency"
-                                        error={!!errors.service_frequency}
-                                        helperText={errors.service_frequency?.message}
+                                        label="Frequency"
                                     >
-                                        {[
-                                            { title: "Monthly", value: "1" },
-                                            { title: "Quarterly", value: "2" },
-                                            { title: "Half-Yearly", value: "3" },
-                                            { title: "Yearly", value: "4" },
-                                        ].map((item) => (
-                                            <MenuItem key={item?.value} value={item?.value}>
-                                                {item?.title}
-                                            </MenuItem>
-                                        ))}
+                                        <MenuItem value="1">Daily</MenuItem>
+                                        <MenuItem value="2">Weekly</MenuItem>
+                                        <MenuItem value="3">Monthly</MenuItem>
+                                        <MenuItem value="4">Quarterly</MenuItem>
+                                        <MenuItem value="5">Half-Yearly</MenuItem>
+                                        <MenuItem value="6">Yearly</MenuItem>
+                                        <MenuItem value="7">One Time</MenuItem>
                                     </TextField>
                                 )}
                             />
@@ -369,18 +346,34 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
                                         fullWidth
                                         size="small"
                                         label="Status"
-                                        error={!!errors.status}
-                                        helperText={errors.status?.message}
                                     >
-                                        {[{ title: "Active", value: "1" }, { title: "Expired", value: "2" }, { title: "Renewed", value: "3" }].map((item) => (
-                                            <MenuItem key={item.value} value={item.value}>
-                                                {item?.title}
-                                            </MenuItem>
-                                        ))}
+                                        <MenuItem value="Pending">Pending</MenuItem>
+                                        <MenuItem value="In Progress">In Progress</MenuItem>
+                                        <MenuItem value="Completed">Completed</MenuItem>
+                                        <MenuItem value="Cancelled">Cancelled</MenuItem>
                                     </TextField>
                                 )}
                             />
                         </Grid>
+
+                        {/* Remarks */}
+                        <Grid item size={{ xs: 12 }}>
+                            <Controller
+                                name="remarks"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        size="small"
+                                        label="Remarks"
+                                    />
+                                )}
+                            />
+                        </Grid>
+
                     </Grid>
                 </DialogContent>
 
@@ -397,7 +390,7 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
                         type="submit"
                         disabled={isSubmitting}
                     >
-                        Save Contract
+                        Save Inspection Schedule
                     </Button>
 
                     <Button
@@ -415,16 +408,13 @@ const AMCComponent = ({ open, setOpen, fetchData, data, selectedAMCData, token }
 
 const frequencyMap =
 {
-    "1": "Monthly",
-    "2": "Quarterly",
-    "3": "Half-Yearly",
-    "4": "Yearly",
-}
-
-const statusMap = {
-    "1": "Active",
-    "2": "Expired",
-    "3": "Renewed",
+    "1": "Daily",
+    "2": "Weekly",
+    "3": "Monthly",
+    "4": "Quarterly",
+    "5": "Half-Yearly",
+    "6": "Yearly",
+    "7": "One Time"
 }
 
 export default function AMCLogsPage() {
@@ -435,13 +425,13 @@ export default function AMCLogsPage() {
     const [data, setData] = useState();
     const [openDialog, setOpenDialog] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [selectedAMCData, setSelectedAMC] = useState()
+    const [selectedScheduleData, setSelectedScheduleData] = useState()
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const handleOpen = () => {
-        setSelectedAMC(null)
+        setSelectedScheduleData(null)
         setOpenDialog(true);
     }
 
@@ -450,7 +440,7 @@ export default function AMCLogsPage() {
 
             setLoading(true);
 
-            const response = await fetch(`${API_URL}/company/amc/fetch/data`, {
+            const response = await fetch(`${API_URL}/company/inspection-schedule/fetch/data`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -486,7 +476,7 @@ export default function AMCLogsPage() {
         setPage(0);
     };
 
-    const amcData = data?.amc || [];
+    const amcData = data?.inspectionSchedule || [];
 
     const paginatedData = amcData.slice(
         page * rowsPerPage,
@@ -498,13 +488,13 @@ export default function AMCLogsPage() {
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Box>
-                    <Typography variant="h4" fontWeight="bold">AMC & Maintenance Logs</Typography>
+                    <Typography variant="h4" fontWeight="bold">Inspection Schedule Logs</Typography>
                     <Typography variant="body2" color="text.secondary">
                         Track annual maintenance contracts, vendors, and expiration dates.
                     </Typography>
                 </Box>
                 <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen}>
-                    Add AMC Contract
+                    Add Inspection Schedule
                 </Button>
             </Box>
 
@@ -513,12 +503,11 @@ export default function AMCLogsPage() {
                 <Table>
                     <TableHead sx={{ bgcolor: '#f1f5f9' }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Asset</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Vendor</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Inspection template</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Assigned To</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Contact No</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Frequency</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Contract Period</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Schedule Period</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
                         </TableRow>
@@ -546,41 +535,35 @@ export default function AMCLogsPage() {
                             paginatedData.map((amc) => (
                                 <TableRow key={amc._id}>
                                     <TableCell sx={{ fontWeight: 500 }}>
-                                        {amc.asset_id.name}
+                                        {amc?.inspection_template_id?.name}
                                     </TableCell>
 
                                     <TableCell>
-                                        {amc.vendor_id?.company_Name || "N/A"}
+
+                                        {amc?.assigned_to ? (amc?.assigned_to?.first_name + " " + amc?.assigned_to?.last_name) : ""}
+
                                     </TableCell>
 
                                     <TableCell>
-                                        {amc.contact_no || "N/A"}
+                                        {amc?.assigned_to ? amc?.assigned_to?.phone : "N/A"}
                                     </TableCell>
 
                                     <TableCell>
                                         <Chip
-                                            label={frequencyMap[amc.service_frequency]}
+                                            label={frequencyMap[amc.frequency]}
                                             size="small"
                                             variant="outlined"
                                         />
                                     </TableCell>
 
                                     <TableCell>
-                                        {formatTime(amc.start_date)} to {formatTime(amc.end_date)}
+                                        {formatTime(amc.scheduled_date)} to {formatTime(amc.due_date)}
                                     </TableCell>
-
-                                    <TableCell>₹{amc.amount}</TableCell>
 
                                     <TableCell>
                                         <Chip
-                                            label={statusMap[amc.status]}
-                                            color={
-                                                amc.status === "1"
-                                                    ? "success"
-                                                    : amc.status === "3"
-                                                        ? "info"
-                                                        : "default"
-                                            }
+                                            label={amc?.status}
+                                            color={getStatusColor(amc?.status)}
                                             size="small"
                                         />
                                     </TableCell>
@@ -590,7 +573,7 @@ export default function AMCLogsPage() {
                                             className="tabler-edit"
                                             style={{ cursor: "pointer" }}
                                             onClick={() => {
-                                                setSelectedAMC(amc);
+                                                setSelectedScheduleData(amc);
                                                 setOpenDialog(true);
                                             }}
                                         />
@@ -612,13 +595,13 @@ export default function AMCLogsPage() {
             </TableContainer>
 
             {/* Add AMC Dialog Modal */}
-            <AMCComponent
+            <InspectionScheduleComponent
                 open={openDialog}
                 setOpen={setOpenDialog}
                 fetchData={fetchData}
                 token={token}
                 data={data}
-                selectedAMCData={selectedAMCData}
+                selectedScheduleData={selectedScheduleData}
             />
         </Box>
     );
