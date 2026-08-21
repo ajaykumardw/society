@@ -16,6 +16,8 @@ import {
   Box,
   Chip,
   Avatar,
+  Pagination,
+  Stack,
   Skeleton
 } from '@mui/material'
 
@@ -248,6 +250,18 @@ const UserDashboard = () => {
     }
   ]
 
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 5;
+
+  const pendingComplaints = dashboardData?.pendingComplain || [];
+
+  const totalPages = Math.ceil(pendingComplaints.length / rowsPerPage);
+
+  const paginatedComplaints = pendingComplaints.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
+
   if (!dashboardData) {
     return (
       <PermissionGuard locale={locale} element={'isCompany'}>
@@ -357,43 +371,66 @@ const UserDashboard = () => {
               </Box>
               <Divider sx={{ mb: 2 }} />
 
-              {(dashboardData && dashboardData?.['pendingComplain'].length > 0) ?
-                dashboardData?.['pendingComplain']?.map((item, index) => (
-                  <Box
-                    key={index}
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{
-                      p: 2,
-                      border: '1px solid #eee',
-                      borderRadius: 2,
-                      mb: 2,
-                      transition: '0.3s',
-                      '&:hover': { backgroundColor: '#fafafa' },
-                    }}
-                  >
-                    <Box display="flex" alignItems="center">
-                      <Avatar sx={{ mr: 2 }}>
-                        <i className='tabler-report'></i>
-                      </Avatar>
-                      <Box>
-                        <Typography fontWeight={600}>{item.complain_no}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Owner
-                        </Typography>
+              {
+                pendingComplaints.length > 0 ? (
+                  <>
+                    {paginatedComplaints.map((item, index) => (
+                      <Box
+                        key={index}
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        sx={{
+                          p: 2,
+                          border: '1px solid #eee',
+                          borderRadius: 2,
+                          mb: 2,
+                          transition: '0.3s',
+                          '&:hover': { backgroundColor: '#fafafa' },
+                        }}
+                      >
+                        <Box display="flex" alignItems="center">
+                          <Avatar sx={{ mr: 2 }}>
+                            <i className="tabler-report"></i>
+                          </Avatar>
+                          <Box>
+                            <Typography fontWeight={600}>
+                              {item.complain_no}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Owner
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Chip
+                          label="Open"
+                          color="primary"
+                          variant="outlined"
+                          size="small"
+                        />
                       </Box>
-                    </Box>
-                    <Chip label="Open" color="primary" variant="outlined" size="small" />
-                  </Box>
-                ))
-                :
-                (
+                    ))}
+
+                    {totalPages > 1 && (
+                      <Stack alignItems="center" mt={2}>
+                        <Pagination
+                          count={totalPages}
+                          page={page}
+                          color="primary"
+                          onChange={(event, value) => setPage(value)}
+                        />
+                      </Stack>
+                    )}
+                  </>
+                ) : (
                   <Box display="flex" flexDirection="column" alignItems="center" py={6}>
                     <Avatar sx={{ width: 56, height: 56, mb: 2 }}>
-                      <i className='tabler-report'></i>
+                      <i className="tabler-report"></i>
                     </Avatar>
-                    <Typography color="text.secondary">No complain found</Typography>
+                    <Typography color="text.secondary">
+                      No complain found
+                    </Typography>
                   </Box>
                 )
               }

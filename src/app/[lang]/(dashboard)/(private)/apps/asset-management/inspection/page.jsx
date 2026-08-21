@@ -96,7 +96,7 @@ const InspectionTemplatePage = ({ open, setOpen, data, selectedInspection, token
     useEffect(() => {
         if (open) {
             if (selectedInspection) {
-                reset(selectedInspection)
+                reset({ ...selectedInspection, category: selectedInspection?.category?._id ?? "" })
             } else {
                 reset()
             }
@@ -405,7 +405,7 @@ export default function InspectionsPage() {
                                         {insp.name}
                                     </TableCell>
 
-                                    <TableCell>{insp.category}</TableCell>
+                                    <TableCell>{insp.category?.name}</TableCell>
 
                                     <TableCell>
                                         {insp.checklist?.length || 0} items
