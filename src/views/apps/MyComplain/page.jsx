@@ -36,7 +36,8 @@ import {
   minLength,
   nullable,
   pipe,
-  optional
+  optional,
+  any
 } from 'valibot'
 
 import {
@@ -195,7 +196,7 @@ const ComplainModal = ({
       string(),
       minLength(1, 'Priority is required')
     ),
-    complain_img: optional(nullable(instance(File))),
+    complain_img: optional(any()),
     description: pipe(
       string(),
       minLength(1, 'Description is required')
