@@ -10,6 +10,7 @@ import {
   Button,
   Paper,
   Dialog,
+  FormControlLabel,
   Checkbox,
   CardContent,
   Typography,
@@ -17,7 +18,6 @@ import {
   DialogTitle,
   DialogActions
 } from "@mui/material"
-
 
 import Grid from '@mui/material/Grid2'
 
@@ -27,15 +27,12 @@ import utc from "dayjs/plugin/utc";
 
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
-
 import {
   LocalizationProvider,
   TimePicker,
-  DatePicker,
 } from "@mui/x-date-pickers";
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
-
 
 import {
   object,
@@ -45,30 +42,20 @@ import {
   regex,
   pipe,
   optional,
+  boolean,
 } from 'valibot'
-
 
 import {
   createColumnHelper,
   flexRender,
-  getCoreRowModel,
   useReactTable,
-  getFilteredRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFacetedMinMaxValues,
+  getCoreRowModel,
   getPaginationRowModel,
-  getSortedRowModel
 } from '@tanstack/react-table'
-
-import { rankItem } from '@tanstack/match-sorter-utils'
-
 
 import { useForm, Controller } from 'react-hook-form'
 
-
 import { useSession } from "next-auth/react"
-
 
 import { toast } from "react-toastify"
 
@@ -104,34 +91,18 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
     }, debounce)
 
     return () => clearTimeout(timeout)
-
   }, [value])
 
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
-
 }
 
 dayjs.extend(utc);
 
 const columnHelper = createColumnHelper()
 
-const VisitorModal = ({
-  open,
-  setIsOpen,
-  fetchVisitors,
-  datass,
-  setVisitorData,
-  createData,
-}) => {
-  const { data: session } = useSession();
-  const token = session?.user?.token;
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-  const [fromTimeValue, setFromTimeValue] = useState(null);
-  const [visitDateValue, setVisitDateValue] = useState("");
-
-  // Validation schema (field presence only)
-  const schema = object({
+// ---- helper to build schema dynamically based on isFrequent + apartment requirement ----
+const buildSchema = (isFrequent, requireApartment) =>
+  object({
     visitor_name: pipe(string(), minLength(1, "Visitor name is required")),
     visitor_contact: pipe(
       string(),
@@ -143,20 +114,44 @@ const VisitorModal = ({
     checkin_from_time: pipe(string(), minLength(1, "Check-in from time is required")),
     checkin_to_time: pipe(string(), minLength(1, "Check-in to time is required")),
     no_of_persons: pipe(string(), minLength(1, "No of persons is required")),
-    vehicle_number: string(),
+    vehicle_number: optional(string()),
     category: pipe(string(), minLength(1, "Category is required")),
-    description: string(),
-    apartment_id:
-      createData && createData?.apartment?.length > 1
-        ? pipe(string(), minLength(1, "Apartment is required"))
-        : optional(string()),
+    description: optional(string()),
+    check_end_date: isFrequent
+      ? pipe(string(), minLength(1, "Check end date is required"))
+      : optional(string()),
+    is_frequent: optional(boolean()),
+    apartment_id: requireApartment
+      ? pipe(string(), minLength(1, "Apartment is required"))
+      : optional(string()),
   });
+
+const VisitorModal = ({
+  open,
+  setIsOpen,
+  fetchVisitors,
+  datass,
+  setVisitorData,
+  createData,
+}) => {
+
+  const { data: session } = useSession();
+  const token = session?.user?.token;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const [isFrequent, setFrequent] = useState(false)
+
+  const requireApartment = !!(createData && createData?.apartment?.length > 1)
+
+  const schema = useMemo(
+    () => buildSchema(isFrequent, requireApartment),
+    [isFrequent, requireApartment]
+  )
 
   const {
     control,
     handleSubmit,
     watch,
-    setValue,
     reset,
     formState: { errors },
   } = useForm({
@@ -166,10 +161,12 @@ const VisitorModal = ({
       visitor_name: "",
       visitor_contact: "",
       apartment_id: "",
+      is_frequent: false,
       checkin_date: "",
       checkin_from_time: "",
       checkin_to_time: "",
-      no_of_persons: "",
+      check_end_date: "",
+      no_of_persons: "1",
       vehicle_number: "",
       category: "",
       description: "",
@@ -183,15 +180,22 @@ const VisitorModal = ({
 
   useEffect(() => {
     if (createData?.apartment?.length && selectedApartmentId) {
-
       const selected = createData.apartment.find(
         (item) => String(item._id) === String(selectedApartmentId)
       );
 
-      setOwnerName(selected?.assigned_to.first_name + " " + selected?.assigned_to.last_name || "N/A");
-      setOwnerPhone(selected?.assigned_to?.phone || "N/A");
-    } else {
+      if (selected?.assigned_to) {
+        const firstName = selected.assigned_to.first_name || "";
+        const lastName = selected.assigned_to.last_name || "";
+        const fullName = `${firstName} ${lastName}`.trim();
 
+        setOwnerName(fullName || "N/A");
+        setOwnerPhone(selected.assigned_to.phone || "N/A");
+      } else {
+        setOwnerName("N/A");
+        setOwnerPhone("N/A");
+      }
+    } else {
       setOwnerName("");
       setOwnerPhone("");
     }
@@ -200,9 +204,8 @@ const VisitorModal = ({
   const onClose = () => {
     setVisitorData();
     setIsOpen(false);
+    setFrequent(false);
     reset();
-    setFromTimeValue(null);
-    setVisitDateValue("");
   };
 
   useEffect(() => {
@@ -214,49 +217,70 @@ const VisitorModal = ({
         checkin_date: datass.check_in_date || "",
         checkin_from_time: datass.check_in_from_time || "",
         checkin_to_time: datass.check_in_to_time || "",
+        check_end_date: datass?.check_end_date || "",
         no_of_persons: datass.no_person ? String(datass.no_person) : "1",
         vehicle_number: datass.vehicle_no || "",
-        category: datass.category._id || "",
+        category: datass.category?._id || "",
+        is_frequent: datass.is_frequent ?? false,
         description: datass.description || "",
       });
 
-      setVisitDateValue(datass.check_in_date || "");
-      setFromTimeValue(datass.check_in_from_time ? dayjs(datass.check_in_from_time, "hh:mm A") : null);
-    } else {
-      reset();
-      setFromTimeValue(null);
-      setVisitDateValue("");
+      setFrequent(datass.is_frequent ?? false)
+    } else if (open) {
+      reset({
+        user: "",
+        visitor_name: "",
+        visitor_contact: "",
+        apartment_id: "",
+        is_frequent: false,
+        checkin_date: "",
+        checkin_from_time: "",
+        checkin_to_time: "",
+        check_end_date: "",
+        no_of_persons: "1",
+        vehicle_number: "",
+        category: "",
+        description: "",
+      });
+      setFrequent(false)
     }
   }, [datass, reset, open]);
 
-
-  // 🧠 Validation Logic (runs on submit)
+  // 🧠 Validation Logic (runs on submit) — times stored as "hh:mm A"
   const validateTimes = (data) => {
     const now = dayjs();
     const selectedDate = dayjs(data.checkin_date);
     const isToday = selectedDate.isSame(now, "day");
 
-    // 1️⃣ Date cannot be before today
     if (selectedDate.isBefore(now, "day")) {
       toast.error("Visit date cannot be before today.");
-
       return false;
     }
 
-    const fromTime = dayjs(data.checkin_from_time, "HH:mm");
-    const toTime = dayjs(data.checkin_to_time, "HH:mm");
+    const fromTime = dayjs(`${data.checkin_date} ${data.checkin_from_time}`, "YYYY-MM-DD hh:mm A");
+    const toTime = dayjs(`${data.checkin_date} ${data.checkin_to_time}`, "YYYY-MM-DD hh:mm A");
 
-    // 2️⃣ If today → From time must be after current time
     if (isToday && fromTime.isBefore(now)) {
       toast.error("From time cannot be earlier than the current time.");
-
       return false;
     }
 
-    // 3️⃣ To time must be strictly after From time
     if (!toTime.isAfter(fromTime)) {
       toast.error("End time must be later than start time.");
+      return false;
+    }
 
+    if (isFrequent && data.check_end_date) {
+      const endDate = dayjs(data.check_end_date);
+
+      if (endDate.isBefore(selectedDate, "day")) {
+        toast.error("Check end date cannot be before check-in date.");
+        return false;
+      }
+    }
+
+    if (Number(data.no_of_persons) < 1) {
+      toast.error("No of persons must be at least 1.");
       return false;
     }
 
@@ -264,7 +288,7 @@ const VisitorModal = ({
   };
 
   const onSubmit = async (data) => {
-    if (!validateTimes(data)) return; // 🚫 stop on invalid inputs
+    if (!validateTimes(data)) return;
 
     try {
       const response = await fetch(
@@ -289,7 +313,6 @@ const VisitorModal = ({
         onClose();
       } else {
         const errorData = await response.json().catch(() => ({}));
-
         toast.error(errorData?.message || "Failed to add visitor");
       }
     } catch (error) {
@@ -303,9 +326,7 @@ const VisitorModal = ({
   const toTime = watch("checkin_to_time");
 
   const now = dayjs();
-
-  const isToday =
-    checkinDate && dayjs(checkinDate).isSame(now, "day");
+  const isToday = checkinDate && dayjs(checkinDate).isSame(now, "day");
 
   return (
     <Dialog
@@ -324,7 +345,7 @@ const VisitorModal = ({
         <DialogContent>
           <Grid container spacing={3}>
             {/* Visitor Name */}
-            <Grid item size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Controller
                 name="visitor_name"
                 control={control}
@@ -341,8 +362,8 @@ const VisitorModal = ({
             </Grid>
 
             {/* Apartment */}
-            {createData && createData?.apartment?.length > 1 && (
-              <Grid item size={{ xs: 12, md: 6 }}>
+            {requireApartment && (
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Controller
                   name="apartment_id"
                   control={control}
@@ -367,7 +388,7 @@ const VisitorModal = ({
             )}
 
             {/* Contact */}
-            <Grid item size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Controller
                 name="visitor_contact"
                 control={control}
@@ -379,13 +400,11 @@ const VisitorModal = ({
                     error={!!errors.visitor_contact}
                     helperText={errors.visitor_contact?.message}
                     inputProps={{
-                      inputMode: 'numeric', // mobile numeric keypad
-                      pattern: '[0-9]*', // HTML pattern hint
+                      inputMode: 'numeric',
+                      pattern: '[0-9]*',
                     }}
                     onChange={(e) => {
-                      // strip all non-digit characters in real-time
                       const numericValue = e.target.value.replace(/\D/g, '');
-
                       field.onChange(numericValue);
                     }}
                   />
@@ -393,8 +412,29 @@ const VisitorModal = ({
               />
             </Grid>
 
-            <Grid item size={{ xs: 12 }}>
-              {selectedApartmentId && (
+            <Grid size={{ xs: 12 }}>
+              <Controller
+                name="is_frequent"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={!!field.value}
+                        onChange={(e) => {
+                          field.onChange(e.target.checked)
+                          setFrequent(e.target.checked)
+                        }}
+                      />
+                    }
+                    label="Frequent Visitor"
+                  />
+                )}
+              />
+            </Grid>
+
+            {selectedApartmentId && requireApartment && (
+              <Grid size={{ xs: 12 }}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -414,9 +454,8 @@ const VisitorModal = ({
                     </Typography>
                   </Box>
 
-
                   <Box display="flex" alignItems="center" mt={1}>
-                    <i className="tebler-phone"></i>
+                    <i className="tabler-phone"></i>
                     <Box>
                       <Typography variant="caption" color="text.secondary">
                         Apartment Owner Number:
@@ -427,51 +466,16 @@ const VisitorModal = ({
                     </Box>
                   </Box>
                 </Paper>
-              )}
-            </Grid>
-
-            {/* Date */}
-            <Grid item size={{ xs: 12, md: 6 }}>
-              <Controller
-                name="checkin_date"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    type="date"
-                    label="Visit Date *"
-                    fullWidth
-                    InputLabelProps={{ shrink: true }}
-                    error={!!errors.checkin_date}
-                    helperText={errors.checkin_date?.message}
-                    inputProps={{
-                      min: new Date().toISOString().split('T')[0] // today's date
-                    }}
-                    onChange={(e) => {
-                      field.onChange(e.target.value)
-                      setVisitDateValue(e.target.value)
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-
-            {/* Visit In Time */}
-            <Grid item size={{ xs: 12 }}>
-              <Typography>
-                <strong>Visit In Time *</strong>
-              </Typography>
-            </Grid>
+              </Grid>
+            )}
 
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <Grid container spacing={4}>
-
                 {/* DATE */}
-                <Grid item size={{ xs: 12, md: 6 }}>
+                <Grid size={isFrequent ? { xs: 12 } : { xs: 12, md: 6 }}>
                   <Controller
                     name="checkin_date"
                     control={control}
-                    rules={{ required: "Visit date is required" }}
                     render={({ field }) => (
                       <TextField
                         {...field}
@@ -489,15 +493,31 @@ const VisitorModal = ({
                   />
                 </Grid>
 
-                {/* TITLE */}
-                <Grid item size={{ xs: 12 }} >
-                  <Typography fontWeight={600}>
-                    Visit Time *
-                  </Typography>
-                </Grid>
+                {isFrequent && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name="check_end_date"
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          type="date"
+                          label="Visit End Date *"
+                          fullWidth
+                          InputLabelProps={{ shrink: true }}
+                          error={!!errors.check_end_date}
+                          helperText={errors.check_end_date?.message}
+                          inputProps={{
+                            min: checkinDate || new Date().toISOString().split("T")[0],
+                          }}
+                        />
+                      )}
+                    />
+                  </Grid>
+                )}
 
                 {/* FROM TIME */}
-                <Grid item size={{ xs: 12, md: 6 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Controller
                     name="checkin_from_time"
                     control={control}
@@ -506,29 +526,17 @@ const VisitorModal = ({
                         if (!value) return "Start time is required";
                         if (!checkinDate) return "Select visit date first";
 
-                        const from = dayjs(
-                          `${checkinDate} ${value}`,
-                          "YYYY-MM-DD HH:mm"
-                        );
+                        const from = dayjs(`${checkinDate} ${value}`, "YYYY-MM-DD hh:mm A");
 
-                        if (
-                          isToday &&
-                          (from.isSame(now, "minute") || from.isBefore(now))
-                        ) {
+                        if (isToday && (from.isSame(now, "minute") || from.isBefore(now))) {
                           return "Start time must be after current time";
                         }
 
                         if (toTime) {
-                          const to = dayjs(
-                            `${checkinDate} ${toTime}`,
-                            "YYYY-MM-DD HH:mm"
-                          );
+                          const to = dayjs(`${checkinDate} ${toTime}`, "YYYY-MM-DD hh:mm A");
 
-                          if (from.isSame(to))
-                            return "Start time cannot equal end time";
-
-                          if (from.isAfter(to))
-                            return "Start time must be before end time";
+                          if (from.isSame(to)) return "Start time cannot equal end time";
+                          if (from.isAfter(to)) return "Start time must be before end time";
                         }
 
                         return true;
@@ -541,15 +549,12 @@ const VisitorModal = ({
                         value={field.value ? dayjs(field.value, "hh:mm A") : null}
                         onChange={(newValue) => field.onChange(newValue ? newValue.format("hh:mm A") : "")}
                         minTime={isToday ? now : undefined}
-                        maxTime={
-                          toTime ? dayjs(toTime, "hh:mm A") : undefined
-                        }
+                        maxTime={toTime ? dayjs(toTime, "hh:mm A") : undefined}
                         slotProps={{
                           textField: {
                             fullWidth: true,
                             error: !!errors.checkin_from_time,
-                            helperText:
-                              errors.checkin_from_time?.message,
+                            helperText: errors.checkin_from_time?.message,
                           },
                         }}
                       />
@@ -558,7 +563,7 @@ const VisitorModal = ({
                 </Grid>
 
                 {/* TO TIME */}
-                <Grid item size={{ xs: 12, md: 6 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Controller
                     name="checkin_to_time"
                     control={control}
@@ -567,29 +572,17 @@ const VisitorModal = ({
                         if (!value) return "End time is required";
                         if (!checkinDate) return "Select visit date first";
 
-                        const to = dayjs(
-                          `${checkinDate} ${value}`,
-                          "YYYY-MM-DD HH:mm"
-                        );
+                        const to = dayjs(`${checkinDate} ${value}`, "YYYY-MM-DD hh:mm A");
 
-                        if (
-                          isToday &&
-                          (to.isSame(now, "minute") || to.isBefore(now))
-                        ) {
+                        if (isToday && (to.isSame(now, "minute") || to.isBefore(now))) {
                           return "End time must be after current time";
                         }
 
                         if (fromTime) {
-                          const from = dayjs(
-                            `${checkinDate} ${fromTime}`,
-                            "YYYY-MM-DD HH:mm"
-                          );
+                          const from = dayjs(`${checkinDate} ${fromTime}`, "YYYY-MM-DD hh:mm A");
 
-                          if (to.isSame(from))
-                            return "End time cannot equal start time";
-
-                          if (to.isBefore(from))
-                            return "End time must be after start time";
+                          if (to.isSame(from)) return "End time cannot equal start time";
+                          if (to.isBefore(from)) return "End time must be after start time";
                         }
 
                         return true;
@@ -601,31 +594,23 @@ const VisitorModal = ({
                         ampm
                         value={field.value ? dayjs(field.value, "hh:mm A") : null}
                         onChange={(newValue) => field.onChange(newValue ? newValue.format("hh:mm A") : "")}
-                        minTime={
-                          fromTime
-                            ? dayjs(fromTime, "hh:mm A")
-                            : isToday
-                              ? now
-                              : undefined
-                        }
+                        minTime={fromTime ? dayjs(fromTime, "hh:mm A") : (isToday ? now : undefined)}
                         slotProps={{
                           textField: {
                             fullWidth: true,
                             error: !!errors.checkin_to_time,
-                            helperText:
-                              errors.checkin_to_time?.message,
+                            helperText: errors.checkin_to_time?.message,
                           },
                         }}
                       />
                     )}
                   />
                 </Grid>
-
               </Grid>
             </LocalizationProvider>
 
             {/* No of Persons */}
-            <Grid item size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Controller
                 name="no_of_persons"
                 control={control}
@@ -638,13 +623,18 @@ const VisitorModal = ({
                     error={!!errors.no_of_persons}
                     helperText={errors.no_of_persons?.message}
                     inputProps={{ min: 1 }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+
+                      field.onChange(val === '' ? '' : String(Math.max(1, Number(val))));
+                    }}
                   />
                 )}
               />
             </Grid>
 
             {/* Vehicle Number */}
-            <Grid item size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Controller
                 name="vehicle_number"
                 control={control}
@@ -655,7 +645,7 @@ const VisitorModal = ({
             </Grid>
 
             {/* Category */}
-            <Grid item size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <Controller
                 name="category"
                 control={control}
@@ -669,7 +659,7 @@ const VisitorModal = ({
                     helperText={errors.category?.message}
                   >
                     {createData?.visitorType?.map((item, index) => (
-                      <MenuItem key={index} value={item._id}>
+                      <MenuItem key={item._id ?? index} value={item._id}>
                         {item.name}
                       </MenuItem>
                     ))}
@@ -679,7 +669,7 @@ const VisitorModal = ({
             </Grid>
 
             {/* Description */}
-            <Grid item size={{ xs: 12 }}>
+            <Grid size={{ xs: 12 }}>
               <Controller
                 name="description"
                 control={control}
@@ -710,7 +700,7 @@ const VisitorModal = ({
   );
 };
 
-const OTPCodeModal = ({ open, setOpenDialog, code, id, data }) => {
+const OTPCodeModal = ({ open, setOpenDialog, code, data }) => {
 
   const onClose = () => {
     setOpenDialog(false)
@@ -731,17 +721,15 @@ const OTPCodeModal = ({ open, setOpenDialog, code, id, data }) => {
         },
       }}
     >
-      {/* Close Button */}
       <DialogCloseButton onClick={onClose}>
         <i className="tabler-x" />
       </DialogCloseButton>
 
-      {/* Title */}
       <DialogTitle
         sx={{
           textAlign: "center",
           fontWeight: 600,
-          background: "linear-gradient(90deg, #7e57c2, #26a69a)", // softer gradient
+          background: "linear-gradient(90deg, #7e57c2, #26a69a)",
           color: "white",
           py: 2,
           fontSize: "1.2rem",
@@ -754,7 +742,6 @@ const OTPCodeModal = ({ open, setOpenDialog, code, id, data }) => {
       </DialogTitle>
 
       <DialogContent sx={{ textAlign: "center", mt: 2, px: 3 }}>
-        {/* Inviter Info */}
         <Box
           sx={{
             display: "flex",
@@ -766,7 +753,7 @@ const OTPCodeModal = ({ open, setOpenDialog, code, id, data }) => {
           }}
         >
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: "15px" }}>
-            <strong>{data?.user_id?.first_name} {data?.user_id?.last_name}</strong>  has invited you to <strong>aparment {data?.apartment_id?.apartment_no}</strong>, <strong>{data?.apartment_id?.tower_id?.name}</strong>, <strong>{data?.apartment_id?.floor_id?.floor_name}</strong>
+            <strong>{data?.user_id?.first_name} {data?.user_id?.last_name}</strong> has invited you to <strong>apartment {data?.apartment_id?.apartment_no}</strong>, <strong>{data?.apartment_id?.tower_id?.name}</strong>, <strong>{data?.apartment_id?.floor_id?.floor_name}</strong>
           </Typography>
         </Box>
 
@@ -774,7 +761,6 @@ const OTPCodeModal = ({ open, setOpenDialog, code, id, data }) => {
           Show this QR code or OTP to the guard at the gate
         </Typography>
 
-        {/* QR Code */}
         <Box sx={{ my: 3, display: "flex", justifyContent: "center" }}>
           <Box
             sx={{
@@ -799,7 +785,6 @@ const OTPCodeModal = ({ open, setOpenDialog, code, id, data }) => {
           — OR —
         </Typography>
 
-        {/* OTP Box */}
         <Box
           sx={{
             background: "linear-gradient(135deg, #ff9800, #ff7043)",
@@ -823,14 +808,13 @@ const OTPCodeModal = ({ open, setOpenDialog, code, id, data }) => {
           sx={{ fontStyle: "italic", mt: 4, mb: 4, fontWeight: 500 }}
           color="text.primary"
         >
-          <strong>{data?.check_in_date}</strong>, <strong>{(data?.check_in_from_time)}</strong> to <strong>{(data?.check_in_to_time)}</strong>
+          <strong>{data?.check_in_date}</strong>, <strong>{data?.check_in_from_time}</strong> to <strong>{data?.check_in_to_time}</strong>
         </Typography>
 
         <Typography variant="body2" color="text.secondary">
           Paalm Paradise, Deoria Road, near zoo, Gorakhpur, UP, 273004
         </Typography>
 
-        {/* Logo */}
         <Box sx={{ my: 3 }}>
           <img
             src="/images/company_logo.png"
@@ -845,19 +829,17 @@ const OTPCodeModal = ({ open, setOpenDialog, code, id, data }) => {
         </Box>
       </DialogContent>
 
-      {/* Footer */}
       <DialogActions sx={{ justifyContent: "center", pb: 2, mb: 8 }}>
         <Typography variant="body1" fontWeight={600} color="text.secondary">
           <strong>Paalm Paradise</strong>
         </Typography>
       </DialogActions>
-    </Dialog >
-
+    </Dialog>
   );
-
 }
 
 const VisitorTable = () => {
+
   const { data: session } = useSession()
   const token = session?.user?.token
   const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -874,13 +856,11 @@ const VisitorTable = () => {
   const [nameNo, setNameNo] = useState('')
   const [globalFilter, setGlobalFilter] = useState('')
 
-  // ⬇️ 2-step modal logic
   const [confirmDialog, setConfirmDialog] = useState(false)
   const [submitDialog, setSubmitDialog] = useState(false)
   const [selectedAction, setSelectedAction] = useState(null)
   const [selectedVisitorId, setSelectedVisitorId] = useState('')
 
-  // Permissions
   const getPermissions = usePermissionList()
   const [permissions, setPermissions] = useState({})
 
@@ -888,15 +868,13 @@ const VisitorTable = () => {
 
   const getAvatar = ({ avatar, fullName }) => {
     if (avatar) return <CustomAvatar src={`${public_url}/uploads/visitor/${avatar}`} size={34} />
-
-    return <CustomAvatar size={34}>{getInitials(fullName)}</CustomAvatar>
+    return <CustomAvatar size={34}>{getInitials(fullName || '')}</CustomAvatar>
   }
 
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
         const result = await getPermissions()
-
         setPermissions(result)
       } catch (error) {
         console.error('Error fetching permissions:', error)
@@ -906,7 +884,6 @@ const VisitorTable = () => {
     if (getPermissions) fetchPermissions()
   }, [getPermissions])
 
-  // Fetch Visitors
   const fetchVisitors = async () => {
     try {
       const response = await fetch(`${API_URL}/user/visitor`, {
@@ -922,7 +899,6 @@ const VisitorTable = () => {
     }
   }
 
-  // Fetch Create Data
   const fetchCreateData = async () => {
     try {
       const response = await fetch(`${API_URL}/user/visitor/create/data`, {
@@ -945,7 +921,6 @@ const VisitorTable = () => {
     }
   }, [API_URL, token])
 
-  // ✅ Final API call for Accept/Reject
   const handleFinalSubmit = async () => {
     try {
       const allow = selectedAction === 'accept'
@@ -980,7 +955,6 @@ const VisitorTable = () => {
     }
   }
 
-  // Filtering
   const filteredData = useMemo(() => {
     return data.filter((row) => {
       const otpMatch =
@@ -998,7 +972,6 @@ const VisitorTable = () => {
     })
   }, [data, globalFilter, nameNo, category])
 
-  // Table Columns
   const columns = useMemo(
     () => [
       {
@@ -1025,11 +998,11 @@ const VisitorTable = () => {
           <div className="flex items-center gap-4">
             {getAvatar({
               avatar: row.original.photo,
-              fullName: `${row.original.first_name} ${row.original.last_name}`
+              fullName: row.original.visitor_name
             })}
             <div className="flex flex-col">
               <Typography color="text.primary" className="font-medium">
-                {`${row.original.visitor_name ?? ''}`}
+                {row.original.visitor_name ?? ''}
               </Typography>
               <Typography variant="body2">{row.original.visitor_contact_no}</Typography>
             </div>
@@ -1062,8 +1035,8 @@ const VisitorTable = () => {
       columnHelper.accessor('check_in_date', {
         header: 'Visit in date & time',
         cell: ({ row }) => {
-          const time1 = (row.original.check_in_from_time)
-          const time2 = (row.original.check_in_to_time)
+          const time1 = row.original.check_in_from_time
+          const time2 = row.original.check_in_to_time
 
           return (
             <Typography>
@@ -1139,13 +1112,13 @@ const VisitorTable = () => {
     initialState: { pagination: { pageSize: 10 } },
     enableRowSelection: true,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel()
+    getPaginationRowModel: getPaginationRowModel(),
+    onRowSelectionChange: setRowSelection,
   })
 
   return (
     <Card>
       <CardContent className="flex justify-between flex-col gap-4 sm:flex-row sm:items-center">
-        {/* Filters */}
         <div className="flex items-center gap-2">
           <Typography>Show</Typography>
           <CustomTextField
@@ -1201,7 +1174,6 @@ const VisitorTable = () => {
         </div>
       </CardContent>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className={tableStyles.table}>
           <thead>
@@ -1244,7 +1216,6 @@ const VisitorTable = () => {
 
       <TablePaginationComponent table={table} />
 
-      {/* Visitor Add/Edit Modal */}
       <VisitorModal
         open={isOpen}
         setIsOpen={setIsOpen}
@@ -1254,7 +1225,6 @@ const VisitorTable = () => {
         createData={createData}
       />
 
-      {/* OTP Modal */}
       <OTPCodeModal
         open={openDialog}
         setOpenDialog={setOpenDialog}
@@ -1263,7 +1233,6 @@ const VisitorTable = () => {
         data={visitorData}
       />
 
-      {/* Step 1: Accept/Reject */}
       <Dialog open={confirmDialog} onClose={() => setConfirmDialog(false)}>
         <DialogTitle>Allow Visitor</DialogTitle>
         <DialogContent>
@@ -1295,7 +1264,6 @@ const VisitorTable = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Step 2: Confirm Submit */}
       <Dialog open={submitDialog} onClose={() => setSubmitDialog(false)}>
         <DialogTitle>Confirm Submission</DialogTitle>
         <DialogContent>
