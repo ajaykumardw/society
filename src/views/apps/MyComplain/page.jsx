@@ -32,8 +32,11 @@ import { valibotResolver } from '@hookform/resolvers/valibot'
 import {
   object,
   string,
+  instance,
   minLength,
-  pipe
+  nullable,
+  pipe,
+  optional
 } from 'valibot'
 
 import {
@@ -69,6 +72,8 @@ import OptionMenu from '@/@core/components/option-menu'
 
 import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
+const ASSET_URL = process.env.NEXT_PUBLIC_ASSETS_URL
+
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value)
 
@@ -78,6 +83,84 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
 }
 
 const columnHelper = createColumnHelper()
+
+// Image validation constants
+const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB in bytes
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
+const ACCEPTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png']
+
+const validateImageFile = (file) => {
+  if (!file) {
+    return null
+  }
+
+  // Check file type (MIME type)
+  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+    return 'Only JPEG, JPG and PNG images are allowed'
+  }
+
+  // Check file extension as a fallback/extra check
+  const fileName = file.name?.toLowerCase() || ''
+  const hasValidExtension = ACCEPTED_IMAGE_EXTENSIONS.some(ext =>
+    fileName.endsWith(ext)
+  )
+
+  if (!hasValidExtension) {
+    return 'Only .jpg, .jpeg and .png files are allowed'
+  }
+
+  // Check file size
+  if (file.size > MAX_FILE_SIZE) {
+    return 'Image size must not exceed 2MB'
+  }
+
+  return null
+}
+
+const ImageModal = ({ open, setOpen, imgFile }) => {
+  const handleClose = () => {
+    setOpen(false)
+  }
+
+  const imageUrl = `${ASSET_URL}/uploads/complain/${imgFile}`
+
+  return (
+    <Dialog
+      fullWidth
+      maxWidth='sm'
+      scroll='body'
+      open={open}
+      onClose={handleClose}
+      sx={{
+        '& .MuiDialog-paper': {
+          overflow: 'visible'
+        }
+      }}
+    >
+      <DialogCloseButton onClick={handleClose}><i className="tabler-x" /></DialogCloseButton>
+      <DialogTitle>Image Preview</DialogTitle>
+      <DialogContent>
+        {!imgFile ?
+          (
+            <Typography textAlign={'center'} fontWeight={'bold'}>Image not found</Typography>
+          )
+          :
+          (
+
+            <img
+              src={imageUrl}
+              alt='Complaint'
+              style={{
+                maxWidth: '100%',
+                maxHeight: '80vh',
+                objectFit: 'contain'
+              }}
+            />
+          )}
+      </DialogContent>
+    </Dialog >
+  )
+}
 
 const ComplainModal = ({
   open,
@@ -112,7 +195,7 @@ const ComplainModal = ({
       string(),
       minLength(1, 'Priority is required')
     ),
-
+    complain_img: optional(nullable(instance(File))),
     description: pipe(
       string(),
       minLength(1, 'Description is required')
@@ -123,6 +206,8 @@ const ComplainModal = ({
     control,
     handleSubmit,
     reset,
+    setError,
+    clearErrors,
     formState: { errors }
   } = useForm({
     resolver: valibotResolver(schema),
@@ -131,6 +216,7 @@ const ComplainModal = ({
       nature: '1',
       complaint_type: '1',
       category: '',
+      complain_img: "",
       description: '',
       priority: ''
     }
@@ -181,17 +267,28 @@ const ComplainModal = ({
 
   const onSubmit = async data => {
     try {
+      const formData = new FormData()
+
+      formData.append('nature', data.nature)
+      formData.append('complaint_type', data.complaint_type)
+      formData.append('category', data.category)
+      formData.append('priority', data.priority)
+      formData.append('description', data.description)
+
+      if (data.complain_img instanceof File) {
+        formData.append('complain_img', data.complain_img)
+      }
+
       const response = await fetch(
         `${API_URL}/user/my-complain`,
         {
           method: 'POST',
 
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           },
 
-          body: JSON.stringify(data)
+          body: formData
         }
       )
 
@@ -333,6 +430,249 @@ const ComplainModal = ({
                   )}
                 />
               </FormControl>
+            </Grid>
+
+            {/* Complaint Image */}
+
+            <Grid size={{ xs: 12 }}>
+              <Controller
+                name='complain_img'
+                control={control}
+                defaultValue={null}
+                render={({
+                  field: { value, onChange },
+                  fieldState: { error }
+                }) => {
+                  const previewUrl = value
+                    ? URL.createObjectURL(value)
+                    : null
+
+                  const handleFileChange = (event) => {
+                    const file = event.target.files?.[0] || null
+
+                    // Reset input value so selecting the same
+                    // invalid file again still triggers onChange
+                    event.target.value = ''
+
+                    if (!file) {
+                      return
+                    }
+
+                    const validationError = validateImageFile(file)
+
+                    if (validationError) {
+                      setError('complain_img', {
+                        type: 'manual',
+                        message: validationError
+                      })
+
+                      toast.error(validationError)
+
+                      return
+                    }
+
+                    clearErrors('complain_img')
+                    onChange(file)
+                  }
+
+                  return (
+                    <Box>
+                      <Typography
+                        variant='subtitle2'
+                        sx={{
+                          fontWeight: 600,
+                          mb: 1
+                        }}
+                      >
+                        Complaint Image
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          border: theme =>
+                            `1.5px dashed ${error
+                              ? theme.palette.error.main
+                              : theme.palette.divider
+                            }`,
+                          borderRadius: 2,
+                          p: 2.5,
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            backgroundColor: 'action.hover'
+                          }
+                        }}
+                      >
+                        {!value ? (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              minHeight: 150,
+                              textAlign: 'center'
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 52,
+                                height: 52,
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: 'primary.main',
+                                color: 'primary.contrastText',
+                                mb: 1.5
+                              }}
+                            >
+                              <i
+                                className='tabler-photo'
+                                style={{ fontSize: 26 }}
+                              />
+                            </Box>
+
+                            <Typography
+                              variant='body1'
+                              sx={{
+                                fontWeight: 600,
+                                mb: 0.5
+                              }}
+                            >
+                              Upload an image
+                            </Typography>
+
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                              sx={{ mb: 2 }}
+                            >
+                              PNG, JPG or JPEG (max 2MB)
+                            </Typography>
+
+                            <Button
+                              variant='contained'
+                              component='label'
+                              startIcon={
+                                <i className='tabler-upload' />
+                              }
+                            >
+                              Choose Image
+                              <input
+                                type='file'
+                                hidden
+                                accept='image/png,image/jpeg,image/jpg,.png,.jpg,.jpeg'
+                                onChange={handleFileChange}
+                              />
+                            </Button>
+                          </Box>
+                        ) : (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                              flexWrap: 'wrap'
+                            }}
+                          >
+                            {/* Preview */}
+                            <Box
+                              sx={{
+                                width: 100,
+                                height: 100,
+                                borderRadius: 2,
+                                overflow: 'hidden',
+                                border: theme =>
+                                  `1px solid ${theme.palette.divider}`,
+                                flexShrink: 0
+                              }}
+                            >
+                              <img
+                                src={previewUrl}
+                                alt='Complaint preview'
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover'
+                                }}
+                              />
+                            </Box>
+
+                            {/* File Details */}
+                            <Box sx={{ flex: 1, minWidth: 180 }}>
+                              <Typography
+                                variant='body2'
+                                sx={{
+                                  fontWeight: 600,
+                                  wordBreak: 'break-word'
+                                }}
+                              >
+                                {value.name}
+                              </Typography>
+
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                              >
+                                {(value.size / 1024).toFixed(1)} KB
+                              </Typography>
+                            </Box>
+
+                            {/* Change Image */}
+                            <Button
+                              variant='outlined'
+                              component='label'
+                              size='small'
+                              startIcon={
+                                <i className='tabler-refresh' />
+                              }
+                            >
+                              Change
+                              <input
+                                type='file'
+                                hidden
+                                accept='image/png,image/jpeg,image/jpg,.png,.jpg,.jpeg'
+                                onChange={handleFileChange}
+                              />
+                            </Button>
+
+                            {/* Remove */}
+                            <Button
+                              variant='outlined'
+                              color='error'
+                              size='small'
+                              onClick={() => {
+                                clearErrors('complain_img')
+                                onChange(null)
+                              }}
+                              startIcon={
+                                <i className='tabler-trash' />
+                              }
+                            >
+                              Remove
+                            </Button>
+                          </Box>
+                        )}
+                      </Box>
+
+                      {error && (
+                        <Typography
+                          color='var(--mui-palette-error-main)'
+                          variant='caption'
+                          sx={{
+                            display: 'block',
+                            mt: 0.75,
+                            ml: 1
+                          }}
+                        >
+                          {error.message}
+                        </Typography>
+                      )}
+                    </Box>
+                  )
+                }}
+              />
             </Grid>
 
             {/* Category */}
@@ -1050,6 +1390,9 @@ const ComplainTable = () => {
   const [openFeedbackModal, setOpenFeedbackModal] = useState(false)
   const [selectComplainId, setSelectComplainId] = useState();
 
+  const [imgFileName, setImgFileName] = useState()
+  const [openImgDialog, setOpenImgDialog] = useState(false)
+
   const fetchComplain = async () => {
     try {
       const response = await fetch(
@@ -1205,6 +1548,38 @@ const ComplainTable = () => {
               )
 
               setOpenDialog(true)
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform =
+                'scale(1.2)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform =
+                'scale(1)'
+            }}
+          />
+        )
+      }),
+
+      columnHelper.accessor('complain_img', {
+        header: 'Attached Image',
+
+        cell: ({ row }) => (
+          <i
+            className='tabler-eye'
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              cursor: 'pointer',
+              transition:
+                'transform 0.2s'
+            }}
+            onClick={() => {
+              setImgFileName(
+                row.original?.complain_img
+              )
+              setOpenImgDialog(true)
             }}
             onMouseEnter={e => {
               e.currentTarget.style.transform =
@@ -1658,6 +2033,11 @@ const ComplainTable = () => {
         id={complainId}
       />
 
+      <ImageModal
+        imgFile={imgFileName}
+        open={openImgDialog}
+        setOpen={setOpenImgDialog}
+      />
 
       {/* Escalate */}
 

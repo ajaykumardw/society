@@ -63,19 +63,21 @@ import DialogCloseButton from "@/components/dialogs/DialogCloseButton"
 
 import { usePermissionList } from '@/utils/getPermission'
 
+const ASSET_URL = process.env.NEXT_PUBLIC_ASSETS_URL
+
 function formatTimestamp(timestamp) {
-    if (!timestamp) return "-";
+  if (!timestamp) return "-";
 
-    const date = new Date(timestamp);
+  const date = new Date(timestamp);
 
-    const options = {
-      year: "numeric",
-      month: "short", // Jan, Feb, etc.
-      day: "2-digit"
-    };
+  const options = {
+    year: "numeric",
+    month: "short", // Jan, Feb, etc.
+    day: "2-digit"
+  };
 
-    return date.toLocaleDateString("en-US", options);
-  }
+  return date.toLocaleDateString("en-US", options);
+}
 
 // Filter function
 const fuzzyFilter = (row, columnId, value, addMeta) => {
@@ -87,6 +89,51 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
 }
 
 const columnHelper = createColumnHelper()
+
+const ImageModal = ({ open, setOpen, imgFile }) => {
+  const handleClose = () => {
+    setOpen(false)
+  }
+
+  const imageUrl = `${ASSET_URL}/uploads/complain/${imgFile}`
+
+  return (
+    <Dialog
+      fullWidth
+      maxWidth='sm'
+      scroll='body'
+      open={open}
+      onClose={handleClose}
+      sx={{
+        '& .MuiDialog-paper': {
+          overflow: 'visible'
+        }
+      }}
+    >
+      <DialogCloseButton onClick={handleClose}><i className="tabler-x" /></DialogCloseButton>
+      <DialogTitle>Image Preview</DialogTitle>
+      <DialogContent>
+        {!imgFile ?
+          (
+            <Typography textAlign={'center'} fontWeight={'bold'}>Image not found</Typography>
+          )
+          :
+          (
+
+            <img
+              src={imageUrl}
+              alt='Complaint'
+              style={{
+                maxWidth: '100%',
+                maxHeight: '80vh',
+                objectFit: 'contain'
+              }}
+            />
+          )}
+      </DialogContent>
+    </Dialog >
+  )
+}
 
 const ComplainModal = ({ open, setIsOpen, fetchComplain, code, id, complainData }) => {
   const { data: session } = useSession();
@@ -536,6 +583,9 @@ const ComplainTable = ({ status }) => {
   const getPermissions = usePermissionList();
   const [permissions, setPermissions] = useState({});
 
+  const [imgFileName, setImgFileName] = useState()
+  const [openImgDialog, setOpenImgDialog] = useState(false)
+
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
@@ -684,6 +734,42 @@ const ComplainTable = ({ status }) => {
               </Button>
             </div>
           )
+        )
+      }),
+
+
+      columnHelper.accessor('complain_img', {
+        header: 'Attached Image',
+
+        cell: ({ row }) => (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+
+            <i
+              className='tabler-eye'
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                cursor: 'pointer',
+                transition:
+                  'transform 0.2s'
+              }}
+              onClick={() => {
+                setImgFileName(
+                  row.original?.complain_img
+                )
+                setOpenImgDialog(true)
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform =
+                  'scale(1.2)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform =
+                  'scale(1)'
+              }}
+            />
+          </div>
         )
       }),
 
@@ -851,6 +937,12 @@ const ComplainTable = ({ status }) => {
         fetchComplain={fetchComplain}
         code={code}
         complainData={complainData}
+      />
+
+      <ImageModal
+        imgFile={imgFileName}
+        open={openImgDialog}
+        setOpen={setOpenImgDialog}
       />
 
       <ComplainTableModal
