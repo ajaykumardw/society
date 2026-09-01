@@ -261,6 +261,16 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
               Announcement
             </MenuItem>
           )}
+          {permissArray?.isCompany && (
+            <MenuItem
+              key='documents'
+              href={`/${locale}/apps/document`}
+              sx={{ display: 'flex', alignItems: 'center' }}
+            >
+              <i className='tabler-documents' style={{ marginRight: 8, fontSize: '1.2rem' }} />
+              Documents
+            </MenuItem>
+          )}
           {permissArray?.isCompany && permissArray?.hasEventPermission && (
             <MenuItem key='Events' href={`/${locale}/apps/event`} sx={{ display: 'flex', alignItems: 'center' }}>
               <i className='tabler-calendar-event' style={{ marginRight: 8, fontSize: '1.2rem' }} />
