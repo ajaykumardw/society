@@ -267,7 +267,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
               href={`/${locale}/apps/document`}
               sx={{ display: 'flex', alignItems: 'center' }}
             >
-              <i className='tabler-documents' style={{ marginRight: 8, fontSize: '1.2rem' }} />
+              <i className='tabler-file' style={{ marginRight: 8, fontSize: '1.2rem' }} />
               Documents
             </MenuItem>
           )}
