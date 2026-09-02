@@ -495,6 +495,8 @@ const DocumentPage = () => {
                                             <IconButton
                                                 size="small"
                                                 onClick={() => {
+
+                                                    
                                                     clearErrors()
                                                     setSelectDocument(row);
                                                     setOpen(true);
