@@ -272,6 +272,7 @@ const DocumentPage = () => {
         handleSubmit: handleFormSubmit,
         setValue,
         reset,
+        clearErrors,
         formState: { errors }
     } = useForm({
         resolver: valibotResolver(documentSchema),
@@ -441,6 +442,7 @@ const DocumentPage = () => {
                     startIcon={<AddIcon />}
                     onClick={() => {
 
+                        clearErrors()
                         setOpen(true)
                         setSelectDocument(null)
                     }}
@@ -493,6 +495,7 @@ const DocumentPage = () => {
                                             <IconButton
                                                 size="small"
                                                 onClick={() => {
+                                                    clearErrors()
                                                     setSelectDocument(row);
                                                     setOpen(true);
                                                 }}
