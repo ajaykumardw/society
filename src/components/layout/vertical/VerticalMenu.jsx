@@ -146,6 +146,17 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
                 </MenuItem>
               )}
 
+              {permissArray?.isUser && (
+                <MenuItem
+                  key='user_documents'
+                  href={`/${locale}/apps/user/documents`}
+                  sx={{ display: 'flex', alignItems: 'center' }}
+                >
+                  <i className='tabler-file' style={{ marginRight: 8, fontSize: '1.2rem' }} />
+                  Documents
+                </MenuItem>
+              )}
+
               {permissArray?.isUser && permissArray?.isSecurityGuard && (
                 <MenuItem href={`/${locale}/apps/user/parcel`} icon={<i className='tabler-package' />}>Parcel Management</MenuItem>
               )}
