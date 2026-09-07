@@ -176,6 +176,12 @@ const ApartmentTable = ({ tableData, fetchZoneData }) => {
       header: 'Apartment Type',
       cell: info => <Typography>{info.getValue()}</Typography>
     }),
+    columnHelper.accessor('assigned_apartment_to', {
+      header: 'Assigned Apartment',
+      cell: ({ row }) => (
+        <Typography>{row?.original?.assigned_to?.first_name || "-"} {row?.original?.assigned_to?.last_name || "-"}</Typography>
+      )
+    }),
     columnHelper.accessor('status', {
       header: 'Apartment Status',
       cell: ({ row }) => (
