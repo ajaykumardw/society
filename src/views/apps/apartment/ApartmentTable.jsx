@@ -194,6 +194,8 @@ const ApartmentTable = ({ tableData, fetchZoneData }) => {
         />
       )
     }),
+
+    //This is the issue
     columnHelper.accessor('assigned_at', {
       header: 'Assigned At',
       cell: ({ row }) => (
