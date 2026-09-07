@@ -49,6 +49,7 @@ import tableStyles from '@core/styles/table.module.css'
 import ApartmentDialog from '@/components/dialogs/apartment-dialog/page'
 import RegionDialog from '@/components/dialogs/region-dialog/page'
 import { usePermissionList } from '@/utils/getPermission'
+import formatTime from '@/utils/formatTime'
 
 // Filter function
 const fuzzyFilter = (row, columnId, value, addMeta) => {
@@ -177,7 +178,7 @@ const ApartmentTable = ({ tableData, fetchZoneData }) => {
       cell: info => <Typography>{info.getValue()}</Typography>
     }),
     columnHelper.accessor('assigned_apartment_to', {
-      header: 'Assigned Apartment',
+      header: 'Assigned User',
       cell: ({ row }) => (
         <Typography>{row?.original?.assigned_to?.first_name || "-"} {row?.original?.assigned_to?.last_name || "-"}</Typography>
       )
@@ -191,6 +192,12 @@ const ApartmentTable = ({ tableData, fetchZoneData }) => {
           variant='tonal'
           size='small'
         />
+      )
+    }),
+    columnHelper.accessor('assigned_at', {
+      header: 'Assigned At',
+      cell: ({ row }) => (
+        <Typography>{formatTime(row?.original?.assigned_at) || "-"}</Typography>
       )
     }),
     columnHelper.display({
