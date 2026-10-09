@@ -24,9 +24,9 @@ import '@/app/globals.css'
 import '@assets/iconify-icons/generated-icons.css'
 
 export const metadata = {
-  title: 'Paalm Paradise',
+  title: 'DW cowork',
   description:
-    'Paalm Paradise'
+    'DW cowork'
 }
 
 const Layout = async ({ children }) => {

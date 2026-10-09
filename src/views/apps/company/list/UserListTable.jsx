@@ -283,7 +283,7 @@ const UserListTable = ({ userData }) => {
               onClick={() => router.push(`/${locale}/apps/society/form`)}
               className='max-sm:is-full'
             >
-              Add New Society
+              Add New company
             </Button>
 
           </div>

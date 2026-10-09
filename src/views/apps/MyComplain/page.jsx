@@ -915,7 +915,7 @@ const HappyCodeModal = ({
           fontWeight='bold'
           color='text.secondary'
         >
-          Paalm Paradise
+          DW cowork
         </Typography>
       </DialogActions>
     </Dialog>

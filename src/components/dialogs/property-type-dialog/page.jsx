@@ -38,10 +38,10 @@ import CustomTextField from '@core/components/mui/TextField'
 import DialogCloseButton from '../DialogCloseButton'
 
 const schema = object({
-    name: pipe(string(), minLength(1, 'Apartment type name is required'), maxLength(50, 'Apartment type name max length is 50'))
+    name: pipe(string(), minLength(1, 'Property type name is required'), maxLength(50, 'Property type name max length is 50'))
 })
 
-const ApartmentTypeDialog = ({ open, setOpen, title = '', fetchZoneData, selectedZone, typeForm, tableData }) => {
+const PropertyTypeDialog = ({ open, setOpen, title = '', fetchZoneData, selectedZone, typeForm, tableData }) => {
 
     const { data: session } = useSession()
     const token = session?.user?.token
@@ -120,8 +120,8 @@ const ApartmentTypeDialog = ({ open, setOpen, title = '', fetchZoneData, selecte
 
         try {
             const url = selectedZone
-                ? `${API_URL}/company/apartment-type/${selectedZone._id}`
-                : `${API_URL}/company/apartment-type`
+                ? `${API_URL}/company/property-type/${selectedZone._id}`
+                : `${API_URL}/company/property-type`
 
             const method = selectedZone ? 'PUT' : 'POST'
 
@@ -138,7 +138,7 @@ const ApartmentTypeDialog = ({ open, setOpen, title = '', fetchZoneData, selecte
 
             if (response.ok) {
                 fetchZoneData?.()
-                toast.success(`Apartment type ${selectedZone ? 'updated' : 'added'} successfully!`, {
+                toast.success(`Property type ${selectedZone ? 'updated' : 'added'} successfully!`, {
                     autoClose: 700
                 })
                 handleClose()
@@ -165,7 +165,7 @@ const ApartmentTypeDialog = ({ open, setOpen, title = '', fetchZoneData, selecte
             </DialogCloseButton>
 
             <DialogTitle variant="h4" className="text-center sm:pbs-16 sm:pbe-6 sm:pli-16">
-                {selectedZone ? 'Edit Apartment Type' : 'Add Apartment Type'}
+                {selectedZone ? 'Edit Property Type' : 'Add Property Type'}
             </DialogTitle>
 
             <form onSubmit={handleSubmit(submitData)} noValidate>
@@ -178,8 +178,8 @@ const ApartmentTypeDialog = ({ open, setOpen, title = '', fetchZoneData, selecte
                                 <CustomTextField
                                     {...field}
                                     required
-                                    label="Apartment Type Name"
-                                    placeholder="Enter apartment type name"
+                                    label="Property Type Name"
+                                    placeholder="Enter property type name"
                                     fullWidth
                                     onKeyDown={(e) => {
                                         const key = e.key;
@@ -234,4 +234,4 @@ const ApartmentTypeDialog = ({ open, setOpen, title = '', fetchZoneData, selecte
     )
 }
 
-export default ApartmentTypeDialog
+export default PropertyTypeDialog

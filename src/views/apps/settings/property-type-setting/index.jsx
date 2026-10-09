@@ -10,13 +10,13 @@ import Typography from '@mui/material/Typography'
 
 import Grid from '@mui/material/Grid2'
 
-import TowerTable from './ApartmentTypeTable'
+import PropertyTable from './PropertyTypeTable'
 
 import SkeletonTableComponent from '@/components/skeleton/table/page'
 
-const Towers = () => {
+const PropertyTypes = () => {
 
-  const [towerData, setTowerData] = useState();
+  const [propertyData, setPropertyData] = useState();
   const [loading, setLoading] = useState(false);
 
   const URL = process.env.NEXT_PUBLIC_API_URL;
@@ -28,7 +28,7 @@ const Towers = () => {
   async function fetchTowerData() {
 
     try {
-      const response = await fetch(`${URL}/company/apartment-type`,
+      const response = await fetch(`${URL}/company/property-type`,
         {
           method: "GET",
           headers: {
@@ -41,7 +41,7 @@ const Towers = () => {
 
       if (response.ok) {
         setLoading(true);
-        setTowerData(datas?.data);
+        setPropertyData(datas?.data);
       } else {
 
       }
@@ -63,12 +63,12 @@ const Towers = () => {
     <Grid container spacing={6}>
       <Grid size={{ xs: 12 }}>
         <Typography variant='h4' className='mbe-1'>
-          Apartment Type List
+          Property Type List
         </Typography>
       </Grid>
       <Grid size={{ xs: 12 }}>
-        {towerData ? (
-          <TowerTable tableData={towerData} fetchZoneData={fetchTowerData} />
+        {propertyData ? (
+          <PropertyTable tableData={propertyData} fetchZoneData={fetchTowerData} />
         )
           : (
             <SkeletonTableComponent />
@@ -79,4 +79,4 @@ const Towers = () => {
   )
 }
 
-export default Towers
+export default PropertyTypes

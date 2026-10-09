@@ -103,7 +103,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
         <SubMenu label='Dashboards' icon={<i className='tabler-smart-home' />}>
-          {permissArray?.notUser && <MenuItem href={`/${locale}/dashboards/society`}>Society</MenuItem>}
+          {permissArray?.notUser && <MenuItem href={`/${locale}/dashboards/society`}>Company</MenuItem>}
 
           {permissArray?.isUser && <MenuItem href={`/${locale}/dashboards/user/owner`}>Owner</MenuItem>}
         </SubMenu>
@@ -240,7 +240,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
               </SubMenu>
             )}
           {permissArray?.isSuperAdmin && (
-            <SubMenu label={'Society'} icon={<i className='tabler-user' />}>
+            <SubMenu label={'Company'} icon={<i className='tabler-user' />}>
               <MenuItem href={`/${locale}/apps/society/list`}>List</MenuItem>
             </SubMenu>
           )}
@@ -321,7 +321,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           )}
           {permissArray?.isCompany && (
             <SubMenu label={'Settings'} icon={<i className='tabler-settings' />}>
-              <MenuItem href={`/${locale}/apps/settings/apartment-type-setting`}>{'Apartment Types'}</MenuItem>
+              <MenuItem href={`/${locale}/apps/settings/property-type-setting`}>{'Property Types'}</MenuItem>
               <MenuItem href={`/${locale}/apps/settings/maintenance-setting`}>{'Maintenances'}</MenuItem>
               <MenuItem href={`/${locale}/apps/settings/sla-setting`}>{'SLA config'}</MenuItem>
               <MenuItem href={`/${locale}/apps/settings/ticket-type-setting`}>{'Ticket Types'}</MenuItem>

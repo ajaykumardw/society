@@ -352,7 +352,7 @@ const HappyCodeModal = ({ open, setOpenDialog, code, id }) => {
             {/* Footer */}
             <DialogActions sx={{ justifyContent: "center", pb: 2 }}>
                 <Typography variant="body1" fontWeight="bold" color="text.secondary">
-                    Paalm Paradise
+                    DW cowork
                 </Typography>
             </DialogActions>
         </Dialog>

@@ -812,7 +812,7 @@ const OTPCodeModal = ({ open, setOpenDialog, code, data }) => {
         </Typography>
 
         <Typography variant="body2" color="text.secondary">
-          Paalm Paradise, Deoria Road, near zoo, Gorakhpur, UP, 273004
+          DW cowork, Deoria Road, near zoo, Gorakhpur, UP, 273004
         </Typography>
 
         <Box sx={{ my: 3 }}>
@@ -831,7 +831,7 @@ const OTPCodeModal = ({ open, setOpenDialog, code, data }) => {
 
       <DialogActions sx={{ justifyContent: "center", pb: 2, mb: 8 }}>
         <Typography variant="body1" fontWeight={600} color="text.secondary">
-          <strong>Paalm Paradise</strong>
+          <strong>DW cowork</strong>
         </Typography>
       </DialogActions>
     </Dialog>

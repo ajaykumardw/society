@@ -1,5 +1,5 @@
 import PermissionGuard from '@/hocs/PermissionGuard';
-import ApartmentType from '@views/apps/settings/apartment-type-setting/index';
+import PropertyType from '@/views/apps/settings/property-type-setting/index';
 
 export default async function TowerApp({ params }) {
 
@@ -7,7 +7,7 @@ export default async function TowerApp({ params }) {
 
     return (
         <PermissionGuard locale={lang} element="isCompany">
-            <ApartmentType />
+            <PropertyType />
         </PermissionGuard>
     );
 }

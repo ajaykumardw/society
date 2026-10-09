@@ -97,7 +97,7 @@ const ViewInvoiceModal = () => {
                     </div>
                     <div>
                       <Typography color='text.primary'>Zoo Deoria By Pass,</Typography>
-                      <Typography color='text.primary'>Paalm Paradise, near Gorakhpur,</Typography>
+                      <Typography color='text.primary'>DW cowork, near Gorakhpur,</Typography>
                       <Typography color='text.primary'>Uttar Pradesh 273016</Typography>
                     </div>
                   </div>
@@ -120,7 +120,7 @@ const ViewInvoiceModal = () => {
                     </Typography>
                     <div>
                       <div className='flex items-center gap-4'>
-                        <Typography className='min-is-[100px]'>Paalm Paradise</Typography>
+                        <Typography className='min-is-[100px]'>DW cowork</Typography>
                       </div>
                       <div className='flex items-center gap-4'>
                         <Typography className='min-is-[100px]'>Talramgarh, Deoria Bypass Road</Typography>
