@@ -181,25 +181,6 @@ const TicketDialog = ({ open, setOpen, title = '', fetchZoneData, selectedZone, 
                                     label="Ticket Type Name"
                                     placeholder="Enter ticket type name"
                                     fullWidth
-                                    onKeyDown={(e) => {
-                                        const key = e.key;
-                                        const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', ' ']; // include space
-
-                                        // Allow A-Z, a-z, and space
-                                        if (!/^[a-zA-Z0-9 ]$/.test(key) && !allowedKeys.includes(key)) {
-                                            e.preventDefault();
-                                        }
-
-                                    }}
-
-                                    onPaste={(e) => {
-                                        const paste = e.clipboardData.getData('text');
-
-                                        // Allow paste if it only contains letters and spaces
-                                        if (!/^[a-zA-Z ]+$/.test(paste)) {
-                                            e.preventDefault();
-                                        }
-                                    }}
                                     error={!!errors?.name}
                                     helperText={errors?.name?.message}
                                 />
