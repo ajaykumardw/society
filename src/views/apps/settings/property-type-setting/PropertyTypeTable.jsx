@@ -41,7 +41,7 @@ import TablePaginationComponent from '@components/TablePaginationComponent'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import ApartmentTypeDialog from '@/components/dialogs/apartment-type-dialog/page'
+import PropertyTypeDialog from '@/components/dialogs/property-type-dialog/page'
 import RegionDialog from '@/components/dialogs/region-dialog/page'
 import { usePermissionList } from '@/utils/getPermission'
 
@@ -79,7 +79,7 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 const columnHelper = createColumnHelper()
 
 // States
-const TowerTable = ({ tableData, fetchZoneData }) => {
+const PropertyTable = ({ tableData, fetchZoneData }) => {
   const [role, setRole] = useState('')
   const [rowSelection, setRowSelection] = useState({})
   const [data, setData] = useState([])
@@ -149,7 +149,7 @@ const TowerTable = ({ tableData, fetchZoneData }) => {
       )
     },
     columnHelper.accessor('name', {
-      header: 'Apartment Type Name',
+      header: 'Property Type Name',
       cell: ({ row }) => (
         <Typography className='capitalize' color='text.primary'>
           {row.original.name}
@@ -160,7 +160,7 @@ const TowerTable = ({ tableData, fetchZoneData }) => {
       header: 'Actions',
       cell: ({ row }) => (
         <div className='flex items-center'>
-          {permissions && permissions?.['hasTowerEditPermission'] && (
+          { (
             <IconButton
               onClick={() => {
                 setSelectedZone(row.original)
@@ -223,7 +223,7 @@ const TowerTable = ({ tableData, fetchZoneData }) => {
             setSelectedZone()
             setSelectedRegion()
           }}>
-            Add Apartment Type
+            Add Property Type
           </Button>
           {/* <CustomTextField
             select
@@ -298,7 +298,7 @@ const TowerTable = ({ tableData, fetchZoneData }) => {
 
       {/* Role Dialog */}
       {openDialog && (
-        <ApartmentTypeDialog
+        <PropertyTypeDialog
           open={openDialog}
           setOpen={setOpenDialog}
           selectedZone={selectedZone}
@@ -306,19 +306,8 @@ const TowerTable = ({ tableData, fetchZoneData }) => {
           tableData={tableData}
         />
       )}
-
-      {openZoneDialog && (
-        <RegionDialog
-          typeForm={true}
-          open={openZoneDialog}
-          setOpen={setOpenZoneDialog}
-          selectZone={selectedZone}
-          selectedRegion={selectedRegion}
-          fetchRegionData={fetchZoneData}
-        />
-      )}
     </Card>
   )
 }
 
-export default TowerTable
+export default PropertyTable
